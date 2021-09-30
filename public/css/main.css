@@ -110,7 +110,8 @@ nav a:hover {
   outline: none !important;
 }
 
-#postTextArea {
+#postTextArea,
+#replyTextArea {
   border: none;
   width: 100%;
   resize: none;
@@ -211,4 +212,27 @@ nav a:hover {
   font-size: 13px;
   color: var(--greyText);
   margin-bottom: 5px;
+}
+
+.modal .postFormContainer {
+  border: none;
+  padding: 0;
+  padding-top: var(--spacing);
+}
+
+.modal .post {
+  padding: 0 0 var(--spacing) 0;
+  border: none;
+  border-bottom: 1px solid var(--lightGrey);
+}
+
+.modal-dialog {
+  max-width: 560px;
+}
+
+.replyFlag {
+  margin-bottom: 5px;
+}
+.replyFlag a {
+  color: var(--blue);
 }

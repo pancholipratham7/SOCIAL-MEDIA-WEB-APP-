@@ -1,36 +1,58 @@
 const Post = require("./../models/postModel");
 const User = require("./../models/userModel");
 
+const getPosts = async function (filter) {
+  let post = await Post.find(filter)
+    .populate("postedBy")
+    .populate("retweetData")
+    .populate("replyTo");
+
+  post = await User.populate(post, {
+    path: "replyTo.postedBy",
+  });
+  post = await User.populate(post, {
+    path: "retweetData.postedBy",
+  });
+  return post;
+};
+
 exports.createPost = async (req, res, next) => {
-  if (req.body.content) {
-    const postData = {
-      content: req.body.content,
-      postedBy: req.session.user._id,
-      pinned: false,
-    };
-    let newPost = await Post.create(postData);
-    newPost = await newPost.populate("postedBy");
-    return res.status(200).json({
-      status: "success",
-      data: newPost,
-    });
+  const postData = {
+    content: req.body.content,
+    postedBy: req.session.user._id,
+  };
+
+  if (req.body.replyTo) {
+    postData.replyTo = req.body.replyTo;
   }
 
-  res.status(404).json({
-    status: "failed",
-    data: null,
+  let newPost = await Post.create(postData);
+  newPost = await newPost.populate("postedBy");
+  return res.status(200).json({
+    status: "success",
+    data: newPost,
+  });
+};
+
+exports.getPost = async (req, res, next) => {
+  let post = await getPosts({ _id: req.params.postId });
+  post = post[0];
+  res.status(200).json({
+    status: "sucess",
+    post,
   });
 };
 
 exports.getAllPosts = async (req, res, next) => {
   try {
-    let posts = await Post.find()
-      .populate("postedBy")
-      .populate("retweetData")
-      .sort({ createdAt: 1 });
-    posts = await User.populate(posts, {
-      path: "retweetData.postedBy",
-    });
+    const posts = await getPosts({});
+    // let posts = await Post.find()
+    //   .populate("postedBy")
+    //   .populate("retweetData")
+    //   .sort({ createdAt: 1 });
+    // posts = await User.populate(posts, {
+    //   path: "retweetData.postedBy",
+    // });
     res.status(200).json({
       status: "success",
       posts,

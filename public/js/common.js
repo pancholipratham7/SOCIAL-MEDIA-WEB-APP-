@@ -1,4 +1,5 @@
 let submitPostBtn = document.getElementById("submitPostButton");
+let replyPostBtn = document.getElementById("submitReplyButton");
 
 //Adding text area
 document
@@ -16,13 +17,10 @@ function createPostHtml(postData) {
     return alert("PostData object is null in createpostHtml function");
   //Checking if the postData is about a retweet
   const isRetweet = postData.retweetData ? true : false;
-  console.log(isRetweet);
 
   //Finding the retweetedBy username
   const retweetedBy = isRetweet ? postData.postedBy.userName : null;
-  console.log(retweetedBy);
   postData = isRetweet ? postData.retweetData : postData;
-  console.log(postData);
 
   const postedBy = postData.postedBy;
   if (!postedBy._id) return console.log("PostedbY property not populated");
@@ -44,6 +42,16 @@ function createPostHtml(postData) {
     </span>`;
   }
 
+  let replyFlag = "";
+  if (postData.replyTo) {
+    if (!postData.replyTo._id) {
+      alert("Reply to field id not present");
+    }
+
+    const replyToUsername = postData.replyTo.postedBy.userName;
+    replyFlag = `<div class="replyFlag">Replying to <a href="/profile/${replyToUsername}">@${replyToUsername}</a></div>`;
+  }
+
   return `<div class='post' data-id=${postData._id}>
             <div class="postActionContainer">
             ${retweetText}
@@ -54,14 +62,15 @@ function createPostHtml(postData) {
               </div>
               <div class="postContentContainer">
                 <div class="header">
-                <a href="/profile/${
-                  postedBy.userName
-                }" class="displayName">${displayName}</a>
-                <span class="username">@${postedBy.userName}</span>
-                <span class="date">${timestamps}</span>
+                  <a href="/profile/${
+                    postedBy.userName
+                  }" class="displayName">${displayName}</a>
+                  <span class="username">@${postedBy.userName}</span>
+                  <span class="date">${timestamps}</span>
                 </div>
+                ${replyFlag}
                 <div class="postBody">
-                <span>${postData.content}</span>
+                  <span>${postData.content}</span>
                 </div>
                 <div class="postFooter">
                   <div class="postButtonContainer">
@@ -93,43 +102,91 @@ function createPostHtml(postData) {
           </div>`;
 }
 
-//Disabling and enabling submit post button
-const textArea = document.getElementById("postTextArea");
-textArea.addEventListener("keyup", function (e) {
-  const textValue = e.target.value.trim();
-  if (textValue === "") {
-    submitPostBtn.disabled = true;
-  } else {
-    submitPostBtn.removeAttribute("disabled");
-  }
+//Disabling and enabling submit post button and replyText submit button
+[
+  document.getElementById("postTextArea"),
+  document.getElementById("replyTextArea"),
+].forEach((item) => {
+  item.addEventListener("keyup", function (e) {
+    const isModal = e.target.closest(".modal");
+    const textValue = e.target.value.trim();
+    if (textValue === "") {
+      if (isModal) {
+        document.getElementById("submitReplyButton").disabled = true;
+      } else submitPostBtn.disabled = true;
+    } else {
+      if (isModal) {
+        document
+          .getElementById("submitReplyButton")
+          .removeAttribute("disabled");
+      } else submitPostBtn.removeAttribute("disabled");
+    }
+  });
 });
 
-//Submit Post button click event handler
-submitPostBtn.addEventListener("click", async function (e) {
-  e.preventDefault();
-  const post = textArea.value;
-  const postData = {
-    content: post,
-  };
-  const res = await fetch("/api/posts", {
-    method: "POST",
-    body: JSON.stringify(postData),
-    headers: { "Content-type": "application/json;charset=UTF-8" },
-  });
-  const result = await res.json();
-  if (!result.data) {
-    alert("Something went Wrong...!");
-  } else {
-    if (document.querySelector(".noResults")) {
-      document.querySelector(".noResults").remove();
+//This event only can be handled using jquery not with vanilla js
+//show.bs.modal event is provided by bootstrap
+//this event will be triggered when modal will open
+$("#replyModal").on("show.bs.modal", async function (e) {
+  const postId = e.relatedTarget.closest(".post").dataset.id;
+  let postData = await fetch(`/api/posts/${postId}`);
+  postData = await postData.json();
+  replyPostBtn.dataset.id = postId;
+  outputPosts(postData.post, document.querySelector("#originalPostContainer"));
+});
+
+//this event will be teriggered when the modal will be closed
+$("#replyModal").on("hidden.bs.modal", async function (e) {
+  document.querySelector("#originalPostContainer").innerHTML = "";
+});
+
+//Submit Post button click event handler and replyPost btn handler
+[submitPostBtn, replyPostBtn].forEach((item) => {
+  item.addEventListener("click", async function (e) {
+    e.preventDefault();
+    const isModal = e.target.closest(".modal");
+    let textArea = isModal
+      ? document.getElementById("replyTextArea")
+      : document.getElementById("postTextArea");
+
+    const post = textArea.value;
+    const postData = {
+      content: post,
+    };
+
+    if (isModal) {
+      const id = replyPostBtn.dataset.id;
+      console.log(id);
+      if (id === null) {
+        return alert("Button Id is null");
+      }
+      postData.replyTo = id;
     }
-    const html = createPostHtml(result.data);
-    document
-      .querySelector(".postsContainer")
-      .insertAdjacentHTML("afterbegin", html);
-    textArea.value = "";
-    submitPostBtn.disabled = true;
-  }
+
+    const res = await fetch("/api/posts", {
+      method: "POST",
+      body: JSON.stringify(postData),
+      headers: { "Content-type": "application/json;charset=UTF-8" },
+    });
+    const result = await res.json();
+    if (!result.data) {
+      alert("Something went Wrong...!");
+    } else {
+      if (document.querySelector(".noResults")) {
+        document.querySelector(".noResults").remove();
+      }
+      const html = createPostHtml(result.data);
+      document
+        .querySelector(".postsContainer")
+        .insertAdjacentHTML("afterbegin", html);
+      textArea.value = "";
+      submitPostBtn.disabled = true;
+      replyPostBtn.disabled = true;
+      if (isModal) {
+        location.reload(true);
+      }
+    }
+  });
 });
 
 //Adding event handler to the like button
@@ -204,10 +261,34 @@ function timeDifference(current, previous) {
   } else if (elapsed < msPerDay) {
     return Math.round(elapsed / msPerHour) + " hours ago";
   } else if (elapsed < msPerMonth) {
-    return Math.round(elapsed / msPerDay) + " days ago";
+    if (Math.round(elapsed / msPerDay) == 1) {
+      return Math.round(elapsed / msPerDay) + " day ago";
+    } else return Math.round(elapsed / msPerDay) + " days ago";
   } else if (elapsed < msPerYear) {
     return Math.round(elapsed / msPerMonth) + " months ago";
   } else {
     return Math.round(elapsed / msPerYear) + " years ago";
+  }
+}
+
+//outpost post function
+function outputPosts(posts, container) {
+  container.innerHTML = "";
+  let html = "";
+
+  //if posts is not an array then changing it into an array
+  if (!Array.isArray(posts)) {
+    posts = [posts];
+  }
+  posts.forEach((post) => {
+    html = createPostHtml(post);
+
+    container.insertAdjacentHTML("afterbegin", html);
+  });
+  if (posts.length === 0) {
+    container.insertAdjacentHTML(
+      "afterbegin",
+      '<span class="noResults">Nothing to show.</span>'
+    );
   }
 }

@@ -9,5 +9,5 @@ router
   .get(postController.getAllPosts);
 router.route("/:postId/like").put(postController.controlPostLike);
 router.route("/:postId/retweet").post(postController.controlRetweet);
-
+router.route("/:postId").get(postController.getPost);
 module.exports = router;

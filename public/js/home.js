@@ -6,17 +6,4 @@ const getAllPosts = async () => {
 
 getAllPosts();
 
-function outputPosts(posts, container) {
-  let html = "";
-  posts.forEach((post) => {
-    html = createPostHtml(post);
 
-    container.insertAdjacentHTML("afterbegin", html);
-  });
-  if (posts.length === 0) {
-    container.insertAdjacentHTML(
-      "afterbegin",
-      '<span class="noResults">Nothing to show.</span>'
-    );
-  }
-}
