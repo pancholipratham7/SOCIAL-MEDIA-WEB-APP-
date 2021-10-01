@@ -16,3 +16,13 @@ exports.getHomePage = (req, res, next) => {
     userLoggedInJs: JSON.stringify(req.session.user),
   });
 };
+
+exports.getPostPage = (req, res, next) => {
+  console.log(req.params.postId);
+  res.status(200).render("postPage", {
+    pageTitle: "View post",
+    userLoggedIn: req.session.user,
+    userLoggedInJs: JSON.stringify(req.session.user),
+    postId: req.params.postId,
+  });
+};

@@ -2,7 +2,7 @@ mixin createPostForm(userLoggedIn)
     .postFormContainer 
         .userImageContainer 
             img(src=userLoggedIn.profilePic  alt="User's profile picture")
-        .textAreaContainer
+        .textAreaContainer.tweetPost
             .buttonsContainer 
                 button#submitPostButton(disabled) Post
 

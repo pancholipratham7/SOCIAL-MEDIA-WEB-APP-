@@ -18,5 +18,7 @@ router
   .get(viewController.getRegisterPage)
   .post(authController.register);
 
+router.route("/post/:postId").get(viewController.getPostPage);
+
 router.route("/logout").get(authController.logout);
 module.exports = router;

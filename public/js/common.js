@@ -1,13 +1,12 @@
-let submitPostBtn = document.getElementById("submitPostButton");
-let replyPostBtn = document.getElementById("submitReplyButton");
-
 //Adding text area
-document
-  .querySelector(".textAreaContainer")
-  .insertAdjacentHTML(
-    "afterbegin",
-    `<textarea id="postTextArea" placeholder="What's happening?"></textarea>`
-  );
+if (document.querySelector(".tweetPost")) {
+  document
+    .querySelector(".tweetPost")
+    .insertAdjacentHTML(
+      "afterbegin",
+      `<textarea id="postTextArea" placeholder="What's happening?"></textarea>`
+    );
+}
 
 //Post html generator function
 function createPostHtml(postData) {
@@ -45,6 +44,7 @@ function createPostHtml(postData) {
   let replyFlag = "";
   if (postData.replyTo) {
     if (!postData.replyTo._id) {
+      console.log(postData.replyTo);
       alert("Reply to field id not present");
     }
 
@@ -107,19 +107,21 @@ function createPostHtml(postData) {
   document.getElementById("postTextArea"),
   document.getElementById("replyTextArea"),
 ].forEach((item) => {
+  if (!item) return;
   item.addEventListener("keyup", function (e) {
     const isModal = e.target.closest(".modal");
     const textValue = e.target.value.trim();
     if (textValue === "") {
       if (isModal) {
         document.getElementById("submitReplyButton").disabled = true;
-      } else submitPostBtn.disabled = true;
+      } else document.getElementById("submitPostButton").disabled = true;
     } else {
       if (isModal) {
         document
           .getElementById("submitReplyButton")
           .removeAttribute("disabled");
-      } else submitPostBtn.removeAttribute("disabled");
+      } else
+        document.getElementById("submitPostButton").removeAttribute("disabled");
     }
   });
 });
@@ -131,7 +133,7 @@ $("#replyModal").on("show.bs.modal", async function (e) {
   const postId = e.relatedTarget.closest(".post").dataset.id;
   let postData = await fetch(`/api/posts/${postId}`);
   postData = await postData.json();
-  replyPostBtn.dataset.id = postId;
+  document.getElementById("submitReplyButton").dataset.id = postId;
   outputPosts(postData.post, document.querySelector("#originalPostContainer"));
 });
 
@@ -141,7 +143,12 @@ $("#replyModal").on("hidden.bs.modal", async function (e) {
 });
 
 //Submit Post button click event handler and replyPost btn handler
-[submitPostBtn, replyPostBtn].forEach((item) => {
+
+[
+  document.getElementById("submitPostButton"),
+  document.getElementById("submitReplyButton"),
+].forEach((item) => {
+  if (!item) return;
   item.addEventListener("click", async function (e) {
     e.preventDefault();
     const isModal = e.target.closest(".modal");
@@ -155,8 +162,7 @@ $("#replyModal").on("hidden.bs.modal", async function (e) {
     };
 
     if (isModal) {
-      const id = replyPostBtn.dataset.id;
-      console.log(id);
+      const id = document.getElementById("submitReplyButton").dataset.id;
       if (id === null) {
         return alert("Button Id is null");
       }
@@ -175,18 +181,28 @@ $("#replyModal").on("hidden.bs.modal", async function (e) {
       if (document.querySelector(".noResults")) {
         document.querySelector(".noResults").remove();
       }
+      if (isModal) {
+        return location.reload(true);
+      }
       const html = createPostHtml(result.data);
       document
         .querySelector(".postsContainer")
         .insertAdjacentHTML("afterbegin", html);
       textArea.value = "";
-      submitPostBtn.disabled = true;
-      replyPostBtn.disabled = true;
-      if (isModal) {
-        location.reload(true);
-      }
+      document.getElementById("submitPostButton").disabled = true;
+      document.getElementById("submitReplyButton").disabled = true;
     }
   });
+});
+
+//event handler for posts to redirect users to post page
+document.addEventListener("click", function (e) {
+  if (!e.target.closest("button")) {
+    if (e.target.closest(".post")) {
+      const postId = e.target.closest(".post").dataset.id;
+      window.location.href = `/post/${postId}`;
+    }
+  }
 });
 
 //Adding event handler to the like button
