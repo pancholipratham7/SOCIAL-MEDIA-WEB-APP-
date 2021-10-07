@@ -21,9 +21,56 @@ mixin createReplyModal(userLoggedIn)
                         .userImageContainer 
                             img(src=userLoggedIn.profilePic  alt="User's profile picture")
                         .textAreaContainer
-                            textArea#replyTextArea(placeholder="What's happening")
+                            textArea#replyTextArea(placeholder="Write you reply...")
                 .modal-footer
                     button.btn.btn-secondary(type='button', data-dismiss='modal') Close
                     button#submitReplyButton.btn.btn-primary(disabled) Reply
 
+
+
+mixin createDeletePostModal(userLoggedIn)
+    #deletePostModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='deletePostModalLabel', aria-hidden='true')
+        .modal-dialog(role='document')
+            .modal-content
+                .modal-header
+                    h5#deletePostModalLabel.modal-title Delete Tweet
+                    button.close(type='button', data-dismiss='modal', aria-label='Close')
+                    span(aria-hidden='true') &times;
+                .modal-body
+                    p Do you want to delete this tweet?
+                .modal-footer
+                    button.btn.btn-secondary(type='button', data-dismiss='modal') No
+                    button#deletePostButton.btn.btn-primary Delete
+
+
+mixin createImageUploadModal()
+    #imageUploadModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='imageUploadModalLabel', aria-hidden='true')
+        .modal-dialog(role='document')
+            .modal-content
+                .modal-header
+                    h5#imageUploadModalLabel.modal-title Upload Image
+                    button.close(type='button', data-dismiss='modal', aria-label='Close')
+                    span(aria-hidden='true') &times;
+                .modal-body
+                    input#filePhoto(type="file" name="filePhoto")
+                    .imagePreviewContainer 
+                        img#imagePreview(src="")
+                .modal-footer
+                    button.btn.btn-secondary(type='button', data-dismiss='modal') Cancel
+                    button#imageUploadButton.btn.btn-primary Upload
+
+
+mixin createPostModals(userLoggedIn)
+    +createReplyModal(userLoggedIn)
+    +createDeletePostModal(userLoggedIn)
+
+mixin createFollowingButton(user,isFollowing)
+    - text=isFollowing?"Following":"Follow"
+    - buttonClass=isFollowing?"followBtn following":"followBtn"
+    button(class=buttonClass data-userid=user._id) #{text}
+
+mixin createTab(name,href,isSelected)
+    - className=isSelected?'tab active':'tab';
+    a(href=href class=className)
+        span #{name}
 

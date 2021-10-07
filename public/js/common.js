@@ -1,3 +1,6 @@
+//Global Variables
+let cropper;
+
 //Adding text area
 if (document.querySelector(".tweetPost")) {
   document
@@ -9,13 +12,16 @@ if (document.querySelector(".tweetPost")) {
 }
 
 //Post html generator function
-function createPostHtml(postData) {
+function createPostHtml(postData, largeFont = false) {
   //Just if some error occurs
   //Only for development purpose
   if (postData === null)
     return alert("PostData object is null in createpostHtml function");
   //Checking if the postData is about a retweet
   const isRetweet = postData.retweetData ? true : false;
+
+  //largeFont class for the post which was clicked to show it somewhat bigger on the post page
+  const largeFontClass = largeFont ? "largeFont" : "";
 
   //Finding the retweetedBy username
   const retweetedBy = isRetweet ? postData.postedBy.userName : null;
@@ -42,17 +48,24 @@ function createPostHtml(postData) {
   }
 
   let replyFlag = "";
-  if (postData.replyTo) {
+  if (postData.replyTo && postData.replyTo._id) {
     if (!postData.replyTo._id) {
       console.log(postData.replyTo);
-      alert("Reply to field id not present");
+      return alert("Reply to field id not present");
+    } else if (!postData.replyTo.postedBy._id) {
+      return alert("PostedBy is not populated");
     }
 
     const replyToUsername = postData.replyTo.postedBy.userName;
     replyFlag = `<div class="replyFlag">Replying to <a href="/profile/${replyToUsername}">@${replyToUsername}</a></div>`;
   }
 
-  return `<div class='post' data-id=${postData._id}>
+  let deleteButton = "";
+  if (postData.postedBy._id === userLoggedIn._id) {
+    deleteButton = `<button class='deletePostBtn' data-id="${postData._id}" data-toggle="modal" data-target="#deletePostModal"><i class="fas fa-trash-alt"></i></button>`;
+  }
+
+  return `<div class='post ${largeFontClass}' data-id=${postData._id}>
             <div class="postActionContainer">
             ${retweetText}
             </div>
@@ -67,6 +80,7 @@ function createPostHtml(postData) {
                   }" class="displayName">${displayName}</a>
                   <span class="username">@${postedBy.userName}</span>
                   <span class="date">${timestamps}</span>
+                  ${deleteButton}
                 </div>
                 ${replyFlag}
                 <div class="postBody">
@@ -134,7 +148,10 @@ $("#replyModal").on("show.bs.modal", async function (e) {
   let postData = await fetch(`/api/posts/${postId}`);
   postData = await postData.json();
   document.getElementById("submitReplyButton").dataset.id = postId;
-  outputPosts(postData.post, document.querySelector("#originalPostContainer"));
+  outputPosts(
+    postData.post.postData,
+    document.querySelector("#originalPostContainer")
+  );
 });
 
 //this event will be teriggered when the modal will be closed
@@ -142,12 +159,35 @@ $("#replyModal").on("hidden.bs.modal", async function (e) {
   document.querySelector("#originalPostContainer").innerHTML = "";
 });
 
-//Submit Post button click event handler and replyPost btn handler
+//getting the post id after clicking on the delete icon
+$("#deletePostModal").on("show.bs.modal", async function (e) {
+  const postId = e.relatedTarget.dataset.id;
+  document.getElementById("deletePostButton").dataset.id = postId;
+  console.log(document.getElementById("deletePostButton").dataset.id);
+});
 
-[
-  document.getElementById("submitPostButton"),
-  document.getElementById("submitReplyButton"),
-].forEach((item) => {
+//ADDING EVENT TO DELETE POST BUTTON
+if (document.getElementById("deletePostButton")) {
+  document
+    .getElementById("deletePostButton")
+    .addEventListener("click", async function (e) {
+      const postId = e.target.dataset.id;
+      let res = await fetch(`/api/posts/${postId}`, {
+        method: "DELETE",
+      });
+      res = await res.json();
+      if (res.status === "success") {
+        location.reload(true);
+      } else if (res.status === "failed") {
+        console.log(res.err);
+        alert(res.err);
+      }
+    });
+}
+// adding event to submit and reply post btn
+const submitPostBtn = document.getElementById("submitPostButton");
+const replyPostBtn = document.getElementById("submitReplyButton");
+[submitPostBtn, replyPostBtn].forEach((item) => {
   if (!item) return;
   item.addEventListener("click", async function (e) {
     e.preventDefault();
@@ -198,9 +238,11 @@ $("#replyModal").on("hidden.bs.modal", async function (e) {
 //event handler for posts to redirect users to post page
 document.addEventListener("click", function (e) {
   if (!e.target.closest("button")) {
-    if (e.target.closest(".post")) {
-      const postId = e.target.closest(".post").dataset.id;
-      window.location.href = `/post/${postId}`;
+    if (!e.target.closest(".displayName")) {
+      if (e.target.closest(".post")) {
+        const postId = e.target.closest(".post").dataset.id;
+        window.location.href = `/post/${postId}`;
+      }
     }
   }
 });
@@ -258,6 +300,100 @@ document.addEventListener("click", async function (e) {
   }
 });
 
+//addingEvent to the follow btn
+document.addEventListener("click", async function (e) {
+  if (e.target.closest(".followBtn")) {
+    const followBtn = e.target.closest(".followBtn");
+    const userId = followBtn.dataset.userid;
+    console.log(userId);
+    let userData = await fetch(`/api/users/${userId}/follow`, {
+      method: "PUT",
+    });
+    userData = await userData.json();
+    console.log(userData.user);
+    if (userData.user.following.includes(userId)) {
+      followBtn.classList.add("following");
+      followBtn.textContent = "Following";
+      if (document.querySelector(".followersValue")) {
+        let followersValue =
+          +document.querySelector(".followersValue").textContent;
+        document.querySelector(".followersValue").textContent = `${
+          followersValue + 1
+        }`;
+      }
+    } else {
+      followBtn.classList.remove("following");
+      followBtn.textContent = "Follow";
+      if (document.querySelector(".followersValue")) {
+        let followersValue =
+          +document.querySelector(".followersValue").textContent;
+        document.querySelector(".followersValue").textContent = `${
+          followersValue - 1
+        }`;
+      }
+    }
+  } else return;
+});
+
+//event for showing image on the modal before uploading it
+//here the user will be uploading the files from his computer so you can't provide the path
+//Without specifying the image path you can also embed image in an html document in a special format called as data URL
+//so first we need to read the image file as data url and then after reading it we need to embed in the image src attrib
+
+if (document.getElementById("filePhoto")) {
+  document
+    .getElementById("filePhoto")
+    .addEventListener("change", function (event) {
+      if (this.files && this.files[0]) {
+        //Javascript inbuilt file reader api
+        let reader = new FileReader();
+        reader.addEventListener("load", function (e) {
+          document
+            .getElementById("imagePreview")
+            .setAttribute("src", e.target.result);
+          //if already the cropper is present then we need to destroy it....
+          if (cropper !== undefined) {
+            cropper.destroy();
+          }
+          cropper = new Cropper(document.getElementById("imagePreview"), {
+            aspectRatio: 1 / 1,
+            background: false,
+          });
+        });
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+}
+
+//Adding event to the image upload button
+if (document.getElementById("imageUploadButton")) {
+  document
+    .getElementById("imageUploadButton")
+    .addEventListener("click", function (event) {
+      const canvas = cropper.getCroppedCanvas();
+      if (canvas == null) {
+        alert("Error while uploading the image.Only upload image files....!");
+        return location.reload(true);
+      }
+      canvas.toBlob(async (blob) => {
+        const formData = new FormData();
+        formData.append("croppedImage", blob);
+        const res = await axios({
+          method: "POST",
+          url: "/api/users/profilePicture",
+          headers: { "Content-Type": "multipart/form-data" },
+          data: formData,
+        });
+        if (res.data.status === "failed") {
+          alert("Error occured while uploading the image.Please try again");
+          return location.reload(true);
+        } else {
+          location.reload(true);
+        }
+      });
+    });
+}
+
 //Changing time recieved from database to twitter standard time format
 function timeDifference(current, previous) {
   var msPerMinute = 60 * 1000;
@@ -290,14 +426,13 @@ function timeDifference(current, previous) {
 //outpost post function
 function outputPosts(posts, container) {
   container.innerHTML = "";
-  let html = "";
 
   //if posts is not an array then changing it into an array
   if (!Array.isArray(posts)) {
     posts = [posts];
   }
   posts.forEach((post) => {
-    html = createPostHtml(post);
+    const html = createPostHtml(post);
 
     container.insertAdjacentHTML("afterbegin", html);
   });
@@ -307,4 +442,24 @@ function outputPosts(posts, container) {
       '<span class="noResults">Nothing to show.</span>'
     );
   }
+}
+
+//outpost posts and replies on post page
+function outputPostsWithReplies(results, container) {
+  container.innerHTML = "";
+
+  //first displaying original post
+  if (results.replyTo && results.replyTo._id) {
+    const mainPostHtml = createPostHtml(results.replyTo);
+    container.insertAdjacentHTML("afterbegin", mainPostHtml);
+  }
+
+  //displaying the post which was clicked
+  const html = createPostHtml(results.postData, true);
+  container.insertAdjacentHTML("beforeend", html);
+
+  results.replies.forEach((post) => {
+    const html = createPostHtml(post);
+    container.insertAdjacentHTML("beforeend", html);
+  });
 }

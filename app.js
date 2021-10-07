@@ -7,6 +7,8 @@ const session = require("express-session");
 //routers
 const viewRouter = require("./routes/viewRoutes");
 const postRouter = require("./routes/postApiRoutes");
+const userRouter = require("./routes/userApiRoutes");
+const uploadRouter = require("./routes/uploadRoutes");
 
 const app = express();
 
@@ -35,6 +37,8 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 //serving the static files
 app.use(express.static(path.join(__dirname, "public")));
 
+app.use("/uploads", uploadRouter);
 app.use("/api/posts", postRouter);
+app.use("/api/users", userRouter);
 
 app.use("/", viewRouter);

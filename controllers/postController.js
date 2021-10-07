@@ -35,17 +35,57 @@ exports.createPost = async (req, res, next) => {
 };
 
 exports.getPost = async (req, res, next) => {
-  let post = await getPosts({ _id: req.params.postId });
-  post = post[0];
+  //first getting the post with that postId
+  let postData = await getPosts({ _id: req.params.postId });
+  postData = postData[0];
+
+  //this will be the result that you will sending at the end
+  let results = {
+    postData,
+  };
+
+  //if it is replied post then you need to get the original post to which you have replied
+  if (postData.replyTo !== undefined) {
+    results.replyTo = postData.replyTo;
+  }
+
+  //all the replied post for this post
+  results.replies = await getPosts({ replyTo: req.params.postId });
+
   res.status(200).json({
     status: "sucess",
-    post,
+    post: results,
   });
 };
 
 exports.getAllPosts = async (req, res, next) => {
   try {
-    const posts = await getPosts({});
+    let searchObj = req.query;
+
+    if (searchObj.isReply !== undefined) {
+      const isReply = searchObj.isReply == "true";
+      searchObj.replyTo = { $exists: isReply };
+      delete searchObj.isReply;
+      console.log(searchObj.replyTo);
+    }
+
+    if (searchObj.followingOnly !== undefined) {
+      const followingOnly = searchObj.followingOnly == "true";
+      if (followingOnly) {
+        if (!req.session.user.following) {
+          req.session.user.following = [];
+        }
+        let objectIds = [];
+        req.session.user.following.forEach((user) => {
+          objectIds.push(user);
+        });
+        objectIds.push(req.session.user._id);
+        searchObj.postedBy = { $in: objectIds };
+      }
+      delete searchObj.followingOnly;
+    }
+
+    const posts = await getPosts(searchObj);
     // let posts = await Post.find()
     //   .populate("postedBy")
     //   .populate("retweetData")
@@ -136,4 +176,20 @@ exports.controlRetweet = async (req, res, next) => {
     status: "success",
     post,
   });
+};
+
+exports.deletePost = async (req, res, next) => {
+  try {
+    await Post.findByIdAndDelete({ _id: req.params.postId });
+    res.status(200).json({
+      status: "success",
+      data: null,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({
+      status: "failed",
+      err,
+    });
+  }
 };

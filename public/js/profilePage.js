@@ -1,7 +1,10 @@
 const getAllPosts = async () => {
+  const repliesTab = selectedTab === "replies" ? true : false;
+
   let postsResult = await axios.get("/api/posts", {
     params: {
-      followingOnly: true,
+      postedBy: profileUserId,
+      isReply: repliesTab,
     },
   });
   outputPosts(
