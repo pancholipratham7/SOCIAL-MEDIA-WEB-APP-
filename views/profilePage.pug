@@ -7,8 +7,13 @@ block content
             const profileUserId=`!{profileUser._id}`;
             const selectedTab=`!{selectedTab}`;
         .profileHeaderContainer
-            .coverPhotoContainer
-
+            .coverPhotoSection 
+                .coverPhotoContainer
+                    if profileUser.coverPhoto 
+                        img(src=profileUser.coverPhoto alt="Cover Photo")
+                    if profileUser._id == userLoggedIn._id 
+                        button.coverPhotoButton(data-toggle="modal" data-target="#coverPhotoUploadModal")
+                            i.fas.fa-camera
                 .userImageContainer 
                     img(src=profileUser.profilePic)
                     if profileUser._id == userLoggedIn._id 
@@ -44,6 +49,8 @@ block content
         .postsContainer
         +createPostModals(userLoggedIn)
         +createImageUploadModal()
+        +createCoverPhotoUploadModal()
+
 
 
 block scripts

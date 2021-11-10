@@ -61,8 +61,19 @@ function createPostHtml(postData, largeFont = false) {
   }
 
   let deleteButton = "";
+  let pinPostButton = "";
+  let pinnedPostText = "";
   if (postData.postedBy._id === userLoggedIn._id) {
+    let pinnedClass = "";
+    let dataTarget = "#pinPostModal";
+    if (postData.pinned === true) {
+      pinnedClass = "active";
+      dataTarget = "#unpinModal";
+      pinnedPostText =
+        "<i class='fas fa-thumbtack'></i> <span>Pinned post</span>";
+    }
     deleteButton = `<button class='deletePostBtn' data-id="${postData._id}" data-toggle="modal" data-target="#deletePostModal"><i class="fas fa-trash-alt"></i></button>`;
+    pinPostButton = `<button  class='pinPostButton ${pinnedClass}' data-id="${postData._id}" data-toggle="modal" data-target=${dataTarget}><i class="fas fa-thumbtack"></i></button>`;
   }
 
   return `<div class='post ${largeFontClass}' data-id=${postData._id}>
@@ -74,12 +85,14 @@ function createPostHtml(postData, largeFont = false) {
                 <img src=${postedBy.profilePic}>
               </div>
               <div class="postContentContainer">
+                <div class='pinnedPostText'>${pinnedPostText}</div>
                 <div class="header">
                   <a href="/profile/${
                     postedBy.userName
                   }" class="displayName">${displayName}</a>
                   <span class="username">@${postedBy.userName}</span>
                   <span class="date">${timestamps}</span>
+                  ${pinPostButton}
                   ${deleteButton}
                 </div>
                 ${replyFlag}
@@ -365,6 +378,33 @@ if (document.getElementById("filePhoto")) {
     });
 }
 
+//event for showing cover Photo on the modal before uploading it
+
+if (document.getElementById("coverPhoto")) {
+  document
+    .getElementById("coverPhoto")
+    .addEventListener("change", function (event) {
+      if (this.files && this.files[0]) {
+        //Javascript inbuilt file reader api
+        let reader = new FileReader();
+        reader.addEventListener("load", function (e) {
+          document
+            .getElementById("coverPreview")
+            .setAttribute("src", e.target.result);
+          //if already the cropper is present then we need to destroy it....
+          if (cropper !== undefined) {
+            cropper.destroy();
+          }
+          cropper = new Cropper(document.getElementById("coverPreview"), {
+            aspectRatio: 16 / 9,
+            background: false,
+          });
+        });
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+}
+
 //Adding event to the image upload button
 if (document.getElementById("imageUploadButton")) {
   document
@@ -394,6 +434,88 @@ if (document.getElementById("imageUploadButton")) {
     });
 }
 
+//Adding event to the cover Photo  upload button
+if (document.getElementById("coverPhotoUploadButton")) {
+  document
+    .getElementById("coverPhotoUploadButton")
+    .addEventListener("click", function (event) {
+      const canvas = cropper.getCroppedCanvas({
+        minWidth: 256,
+        minHeight: 256,
+        maxWidth: 4096,
+        maxHeight: 4096,
+        fillColor: "#fff",
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: "high",
+      });
+      if (canvas == null) {
+        alert("Error while uploading the image.Only upload image files....!");
+        return location.reload(true);
+      }
+      canvas.toBlob(async (blob) => {
+        const formData = new FormData();
+        formData.append("croppedImage", blob);
+        const res = await axios({
+          method: "POST",
+          url: "/api/users/coverPhoto",
+          headers: { "Content-Type": "multipart/form-data" },
+          data: formData,
+        });
+        if (res.data.status === "failed") {
+          alert("Error occured while uploading the image.Please try again");
+          return location.reload(true);
+        } else {
+          location.reload(true);
+        }
+      });
+    });
+}
+
+//Listening to the opening of pin Modal event
+$("#pinPostModal").on("show.bs.modal", function (e) {
+  // console.log(e.relatedTarget);
+  const postId = e.relatedTarget.dataset.id;
+  document.getElementById("pinPostButton").dataset.postId = postId;
+});
+
+//Listening to the opening of unpin Modal event
+$("#unpinModal").on("show.bs.modal", function (e) {
+  // console.log(e.relatedTarget);
+  const postId = e.relatedTarget.dataset.id;
+  document.getElementById("unpinPostButton").dataset.postId = postId;
+});
+
+//Adding event to the Pin button
+document.addEventListener("click", async function (e) {
+  if (e.target === document.getElementById("pinPostButton")) {
+    //updating the pinned attribute in the database
+    const res = await axios({
+      method: "PUT",
+      url: `/api/posts/${e.target.dataset.postId}/pin`,
+      data: {
+        pinned: true,
+      },
+    });
+    console.log(res.data);
+    if (res.data.status === "success") {
+      location.reload();
+    }
+  } else if (e.target === document.getElementById("unpinPostButton")) {
+    //unpinng the post making the call to the backend
+    const res = await axios({
+      method: "PUT",
+      url: `/api/posts/${e.target.dataset.postId}/pin`,
+      data: {
+        pinned: false,
+      },
+    });
+    if (res.data.status === "success") {
+      location.reload();
+    }
+  }
+});
+
+//StackOverflow
 //Changing time recieved from database to twitter standard time format
 function timeDifference(current, previous) {
   var msPerMinute = 60 * 1000;

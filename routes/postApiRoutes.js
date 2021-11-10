@@ -18,4 +18,8 @@ router
   .route("/:postId")
   .get(userController.isLoggedIn, postController.getPost)
   .delete(userController.isLoggedIn, postController.deletePost);
+
+router
+  .route("/:postId/pin")
+  .put(userController.isLoggedIn, postController.pinPost);
 module.exports = router;

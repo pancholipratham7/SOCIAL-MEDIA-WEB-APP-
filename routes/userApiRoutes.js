@@ -11,4 +11,8 @@ router
   .route("/profilePicture")
   .post(upload.single("croppedImage"), userController.uploadProfilePicture);
 
+router
+  .route("/coverPhoto")
+  .post(upload.single("croppedImage"), userController.uploadCoverPhoto);
+
 module.exports = router;

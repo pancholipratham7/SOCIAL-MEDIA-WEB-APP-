@@ -101,3 +101,25 @@ exports.getFollowingPage = async (req, res, next) => {
   userData.selectedTab = "following";
   res.status(200).render("followersAndFollowing", userData);
 };
+
+//search page route
+exports.getSearchPage = async (req, res, next) => {
+  res.render("searchPage", {
+    pageTitle: "Search",
+    userLoggedIn: req.session.user,
+    userLoggedInJs: JSON.stringify(req.session.user),
+    selectedTab: "posts",
+  });
+};
+
+//selected tab on search page route
+exports.searchInfoAboutSelectedTab = async (req, res, next) => {
+  const selectedTab = req.params.selectedTab;
+  console.log(selectedTab);
+  res.render("searchPage", {
+    pageTitle: "Search",
+    userLoggedIn: req.session.user,
+    userLoggedInJs: JSON.stringify(req.session.user),
+    selectedTab,
+  });
+};

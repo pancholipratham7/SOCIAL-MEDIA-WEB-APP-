@@ -99,3 +99,39 @@ exports.uploadProfilePicture = async (req, res, next) => {
     result: "Chup kar chutiye",
   });
 };
+
+//upload cover photo
+exports.uploadCoverPhoto = async (req, res, next) => {
+  if (!req.file) {
+    return res.status(400).json({
+      status: "failed",
+      data: null,
+    });
+  }
+  console.log(req.file);
+
+  const filePath = `/uploads/images/${req.file.filename}.png`;
+  const tempPath = req.file.path;
+  const targetPath = path.join(__dirname, `./../${filePath}`);
+
+  fs.rename(tempPath, targetPath, (error) => {
+    if (error != null) {
+      return res.status(400).json({
+        status: "failed",
+        data: null,
+      });
+    }
+  });
+  req.session.user = await User.findByIdAndUpdate(
+    req.session.user._id,
+    {
+      coverPhoto: filePath,
+    },
+    { new: true }
+  );
+
+  res.status(200).json({
+    status: "success",
+    result: "Chup kar chutiye",
+  });
+};

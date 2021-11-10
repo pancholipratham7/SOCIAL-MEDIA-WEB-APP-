@@ -29,7 +29,9 @@ router
   .route("/profile/:userName/followers")
   .get(userController.isLoggedIn, viewController.getFollowersPage);
 
-router.route("/profile/:userName/following").get(userController.isLoggedIn, viewController.getFollowingPage);
+router
+  .route("/profile/:userName/following")
+  .get(userController.isLoggedIn, viewController.getFollowingPage);
 
 //route for checking anyone else's profile
 router
@@ -45,5 +47,15 @@ router
 router
   .route("/profile")
   .get(userController.isLoggedIn, viewController.getLoggedInUserProfilePage);
+
+//route for the search page
+router
+  .route("/search")
+  .get(userController.isLoggedIn, viewController.getSearchPage);
+
+//route for searching Posts or Users based on the selected Tab
+router
+  .route("/search/:selectedTab")
+  .get(userController.isLoggedIn, viewController.searchInfoAboutSelectedTab);
 
 module.exports = router;
