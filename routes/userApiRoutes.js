@@ -4,6 +4,7 @@ const upload = multer({ dest: "uploads/" });
 const userController = require("./../controllers/userController");
 const router = express.Router();
 
+router.route("/").get(userController.searchInputUsers);
 router.route("/:userId/follow").put(userController.follow);
 router.route("/:userId/followers").get(userController.getFollowers);
 router.route("/:userId/following").get(userController.getFollowing);

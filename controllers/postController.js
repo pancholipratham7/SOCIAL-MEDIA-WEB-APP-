@@ -69,6 +69,16 @@ exports.getAllPosts = async (req, res, next) => {
       console.log(searchObj.replyTo);
     }
 
+    //for searching posts with input search posts
+    //i we have included so that whether we search in uppercase or lowercae it will work
+    //You can make this more complex
+    //we can add functionality like that ki users can search only the posts of the person they follow
+    //but it's ok we are not doing here you can do it afterwords it's simple
+    if (searchObj.search !== undefined) {
+      searchObj.content = { $regex: searchObj.search, $options: "i" };
+      delete searchObj.search;
+    }
+
     if (searchObj.followingOnly !== undefined) {
       const followingOnly = searchObj.followingOnly == "true";
       if (followingOnly) {
@@ -203,7 +213,7 @@ exports.pinPost = async (req, res, next) => {
   if (req.body.pinned !== undefined) {
     await Post.updateMany({ postedBy: req.session.user, pinned: false });
   }
- await Post.findByIdAndUpdate({_id:req.params.postId},req.body)
+  await Post.findByIdAndUpdate({ _id: req.params.postId }, req.body);
   res.status(200).json({
     status: "success",
   });

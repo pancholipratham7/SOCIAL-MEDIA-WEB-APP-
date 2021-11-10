@@ -10,6 +10,26 @@ exports.isLoggedIn = (req, res, next) => {
   }
 };
 
+exports.searchInputUsers = async (req, res, next) => {
+  console.log(req.query);
+  let searchObj = req.query;
+  if (req.query.search !== undefined) {
+    searchObj = {
+      $or: [
+        { firstName: { $regex: req.query.search, $options: "i" } },
+        { lastName: { $regex: req.query.search, $options: "i" } },
+        { userName: { $regex: req.query.search, $options: "i" } },
+      ],
+    };
+  }
+
+  const users = await User.find(searchObj);
+  res.status(200).json({
+    status: "success",
+    users,
+  });
+};
+
 exports.follow = async (req, res, next) => {
   const user = await User.findById({ _id: req.params.userId });
   if (!user) {
