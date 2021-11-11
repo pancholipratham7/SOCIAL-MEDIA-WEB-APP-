@@ -485,4 +485,5 @@ nav a:hover {
 
 #createChatButton:disabled {
   background-color: var(--lightGrey);
+  color: var(--greyText);
 }
