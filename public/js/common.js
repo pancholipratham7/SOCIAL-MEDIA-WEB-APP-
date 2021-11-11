@@ -565,14 +565,14 @@ function outputSelectableUsers(results, container) {
   results.forEach((result) => {
     //NOT OUTPUTTING OURSELF
     if (result._id === userLoggedIn._id) {
-      container.insertAdjacentHTML(
-        "afterbegin",
-        "<span class='noResults'>No results found</span>"
-      );
       return;
     }
     const html = createUserHtml(result, true);
-    container.insertAdjacentHTML("afterbegin", html);
+    let element = document.createElement("div");
+    element.classList.add("user");
+    element.innerHTML = html;
+    container.appendChild(element);
+    // container.insertAdjacentHTML("afterbegin", html);
   });
 }
 
@@ -659,7 +659,10 @@ function outputUsers(results, container) {
   }
   results.forEach((result) => {
     const html = createUserHtml(result, true);
-    container.insertAdjacentHTML("afterbegin", html);
+    const element = document.createElement("div");
+    element.classList.add("user");
+    element.innerHTML = html;
+    container.appendChild(element);
   });
 }
 
@@ -678,16 +681,26 @@ function createUserHtml(userData, showFollowButton) {
                           </div>`;
   }
 
-  return `<div class='user'>
-                  <div class='userImageContainer'>
-                      <img src='${userData.profilePic}'>
-                  </div>
-                  <div class='userDetailsContainer'>
-                      <div class='header'>
-                          <a href='/profile/${userData.userName}'>${name}</a>
-                          <span class='username'>@${userData.userName}</span>
-                      </div>
-                  </div>
-                  ${htmlFollowButton}
-              </div>`;
+  // return `<div class='user'>
+  //                 <div class='userImageContainer'>
+  //                     <img src='${userData.profilePic}'>
+  //                 </div>
+  //                 <div class='userDetailsContainer'>
+  //                     <div class='header'>
+  //                         <a href='/profile/${userData.userName}'>${name}</a>
+  //                         <span class='username'>@${userData.userName}</span>
+  //                     </div>
+  //                 </div>
+  //                 ${htmlFollowButton}
+  //             </div>`;
+  return `<div class='userImageContainer'>
+            <img src='${userData.profilePic}'>
+          </div>
+            <div class='userDetailsContainer'>
+              <div class='header'>
+                <a href='/profile/${userData.userName}'>${name}</a>
+                <span class='username'>@${userData.userName}</span>
+              </div>
+            </div>
+            ${htmlFollowButton}`;
 }
