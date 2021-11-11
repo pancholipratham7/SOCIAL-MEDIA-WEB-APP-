@@ -123,3 +123,21 @@ exports.searchInfoAboutSelectedTab = async (req, res, next) => {
     selectedTab,
   });
 };
+
+//Messages page
+exports.getMessagesPage = async (req, res, next) => {
+  res.status(200).render("inboxPage", {
+    userLoggedIn: req.session.user,
+    userLoggedInJs: JSON.stringify(req.session.user),
+    pageTitle: "Inbox",
+  });
+};
+
+//new Message page
+exports.getNewMessagePage = async (req, res, next) => {
+  res.status(200).render("newMessage", {
+    userLoggedIn: req.session.user,
+    userLoggedInJs: JSON.stringify(req.session.user),
+    pageTitle: "New Message",
+  });
+};

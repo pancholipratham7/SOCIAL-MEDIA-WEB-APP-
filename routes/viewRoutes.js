@@ -8,11 +8,23 @@ const router = express.Router();
 //Home page
 router.route("/").get(userController.isLoggedIn, viewController.getHomePage);
 
+//MESSAGES PAGE
+router
+  .route("/messages")
+  .get(userController.isLoggedIn, viewController.getMessagesPage);
+
+//NEW MESSAGE PAGE
+router
+  .route("/messages/new")
+  .get(userController.isLoggedIn, viewController.getNewMessagePage);
+
+// LOGIN PAGE
 router
   .route("/login")
   .get(viewController.getLoginPage)
   .post(authController.login);
 
+// Register page
 router
   .route("/register")
   .get(viewController.getRegisterPage)
