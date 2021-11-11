@@ -1,6 +1,7 @@
 //Global Variables
 let cropper;
 let timer;
+let selectedUsers = [];
 
 //Adding text area
 if (document.querySelector(".tweetPost")) {
@@ -516,17 +517,26 @@ document.addEventListener("click", async function (e) {
   }
 });
 
-// timer for searching users for chatting
+// // timer for searching users for chatting
 if (document.getElementById("userSearchTextBox")) {
   document
     .getElementById("userSearchTextBox")
     .addEventListener("keydown", function (event) {
       clearTimeout(timer);
-      const textBox = event.target;
+      const textBox = document.getElementById("userSearchTextBox");
       const value = textBox.value;
+
       //If the user presses the backspace key we want to delete the user selected for the chat option
       if (value == "" && event.key === "Backspace") {
         //Clearing the pervious user
+        const removedUser = selectedUsers.pop();
+        showSelectedUsers();
+        document.querySelector(".resultsContainer").textContent = "";
+        if (selectedUsers.length === 0) {
+          document
+            .getElementById("createChatButton")
+            .setAttribute("disabled", true);
+        }
         return;
       }
       timer = setTimeout(() => {
@@ -564,16 +574,50 @@ function outputSelectableUsers(results, container) {
   }
   results.forEach((result) => {
     //NOT OUTPUTTING OURSELF
-    if (result._id === userLoggedIn._id) {
+    if (
+      result._id === userLoggedIn._id ||
+      selectedUsers.some((user) => user._id === result._id)
+    ) {
       return;
     }
-    const html = createUserHtml(result, true);
+    const html = createUserHtml(result, false);
     let element = document.createElement("div");
     element.classList.add("user");
     element.innerHTML = html;
+
+    // adding event for selcting the searched users for chatting
+    element.addEventListener("click", function (e) {
+      usersSelected(result);
+    });
+
     container.appendChild(element);
     // container.insertAdjacentHTML("afterbegin", html);
   });
+}
+
+// usersSelected function for handling the click at the user you want to select
+function usersSelected(user) {
+  selectedUsers.push(user);
+  showSelectedUsers();
+  document.getElementById("userSearchTextBox").value = "";
+  document.getElementById("userSearchTextBox").focus();
+  document.querySelector(".resultsContainer").textContent = "";
+  document.getElementById("createChatButton").removeAttribute("disabled");
+}
+
+function showSelectedUsers() {
+  let selectedUsersHtml = "";
+  console.log(selectedUsers);
+  selectedUsers.forEach((user) => {
+    const name = user.firstName + " " + user.lastName;
+    selectedUsersHtml =
+      selectedUsersHtml + `<span class='selectedUser'>${name}</span>`;
+  });
+  console.log(selectedUsersHtml);
+  document.querySelectorAll(".selectedUser").forEach((el) => el.remove());
+  document
+    .getElementById("selectedUsers")
+    .insertAdjacentHTML("afterbegin", selectedUsersHtml);
 }
 
 //StackOverflow
