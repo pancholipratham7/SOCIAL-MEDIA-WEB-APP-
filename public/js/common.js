@@ -1,5 +1,6 @@
 //Global Variables
 let cropper;
+let timer;
 
 //Adding text area
 if (document.querySelector(".tweetPost")) {
@@ -514,6 +515,66 @@ document.addEventListener("click", async function (e) {
     }
   }
 });
+
+// timer for searching users for chatting
+if (document.getElementById("userSearchTextBox")) {
+  document
+    .getElementById("userSearchTextBox")
+    .addEventListener("keydown", function (event) {
+      clearTimeout(timer);
+      const textBox = event.target;
+      const value = textBox.value;
+      //If the user presses the backspace key we want to delete the user selected for the chat option
+      if (value == "" && event.key === "Backspace") {
+        //Clearing the pervious user
+        return;
+      }
+      timer = setTimeout(() => {
+        if (value.trim() === "") {
+          document.querySelector(".resultsContainer").textContent = "";
+        } else {
+          searchUsers(value);
+        }
+      }, 1000);
+    });
+}
+
+//function for searching users during the chat options
+async function searchUsers(value) {
+  const res = await axios.get("/api/users", {
+    params: {
+      search: value,
+    },
+  });
+  outputSelectableUsers(
+    res.data.users,
+    document.querySelector(".resultsContainer")
+  );
+}
+
+//FUNCTION FOR OUTPUTTING selectable SEARCHED USERS
+function outputSelectableUsers(results, container) {
+  container.innerHTML = "";
+  if (results.length === 0) {
+    container.insertAdjacentHTML(
+      "afterbegin",
+      "<span class='noResults'>No results found</span>"
+    );
+    return;
+  }
+  results.forEach((result) => {
+    //NOT OUTPUTTING OURSELF
+    if (result._id === userLoggedIn._id) {
+      container.insertAdjacentHTML(
+        "afterbegin",
+        "<span class='noResults'>No results found</span>"
+      );
+      return;
+    }
+    const html = createUserHtml(result, true);
+    container.insertAdjacentHTML("afterbegin", html);
+  });
+}
 
 //StackOverflow
 //Changing time recieved from database to twitter standard time format

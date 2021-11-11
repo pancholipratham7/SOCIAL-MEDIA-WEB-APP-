@@ -1,5 +1,4 @@
 const searchBox = document.getElementById("searchBox");
-let timer = "";
 
 //Here we will be adding a timer for searching the particular user or post in the database only when the user will stop typing
 //Refer to react course in that react course we did the same
@@ -8,7 +7,7 @@ searchBox.addEventListener("keydown", function (e) {
   const searchType = document.getElementById("searchBox").dataset.search;
   clearTimeout(timer);
   timer = setTimeout(() => {
-    if (searchBox.value === "") {
+    if (searchBox.value.trim() === "") {
       document.querySelector(".resultsContainer").textContent = "";
     } else {
       search(searchBox.value, searchType);
