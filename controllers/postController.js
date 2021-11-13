@@ -211,7 +211,7 @@ exports.pinPost = async (req, res, next) => {
 
   //firstly unpinning all the post
   if (req.body.pinned !== undefined) {
-    await Post.updateMany({ postedBy: req.session.user, pinned: false });
+    await Post.updateMany({ postedBy: req.session.user }, { pinned: false });
   }
   await Post.findByIdAndUpdate({ _id: req.params.postId }, req.body);
   res.status(200).json({
