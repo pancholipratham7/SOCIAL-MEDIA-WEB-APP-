@@ -203,8 +203,9 @@ const getChatByUserId = async (userLoggedInId, otherUserId) => {
       users: {
         $size: 2,
         $all: [
-          { $elemMatch: { $eq: userLoggedInId } },
-          { $elemMatch: { $eq: otherUserId } },
+          // If you will not use mongoose.Types.ObjectId then it will always create a new chat everytime
+          { $elemMatch: { $eq: mongoose.Types.ObjectId(userLoggedInId) } },
+          { $elemMatch: { $eq: mongoose.Types.ObjectId(otherUserId) } },
         ],
       },
     },
