@@ -9,6 +9,7 @@ const viewRouter = require("./routes/viewRoutes");
 const postRouter = require("./routes/postApiRoutes");
 const userRouter = require("./routes/userApiRoutes");
 const uploadRouter = require("./routes/uploadRoutes");
+const chatRouter=require('./routes/chatApiRoutes');
 
 const app = express();
 
@@ -40,5 +41,6 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", uploadRouter);
 app.use("/api/posts", postRouter);
 app.use("/api/users", userRouter);
+app.use("/api/chats",chatRouter);
 
 app.use("/", viewRouter);

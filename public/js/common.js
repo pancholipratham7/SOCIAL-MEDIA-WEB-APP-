@@ -620,6 +620,23 @@ function showSelectedUsers() {
     .insertAdjacentHTML("afterbegin", selectedUsersHtml);
 }
 
+//CHAT SECTION
+//Adding event to the creat Chat button
+document.addEventListener("click", async function (e) {
+  if (e.target === document.getElementById("createChatButton")) {
+    const res = await axios.post("/api/chats", {
+      users: selectedUsers,
+    });
+
+    const chat = res.data.chat;
+    if (!chat || !chat._id) {
+      return alert("Invalid respone from server");
+    }
+    console.log(chat);
+    location.replace(`/messages/${chat._id}`);
+  }
+});
+
 //StackOverflow
 //Changing time recieved from database to twitter standard time format
 function timeDifference(current, previous) {

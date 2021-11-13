@@ -1,4 +1,6 @@
 const User = require("./../models/userModel");
+const Chat = require("./../models/chatModel");
+
 exports.getLoginPage = (req, res, next) => {
   res.status(200).render("login", {
     pageTitle: "Login",
