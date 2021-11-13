@@ -34,7 +34,8 @@ exports.getChats = async (req, res, next) => {
   //Loading all our chats
   const chats = await Chat.find({
     users: { $elemMatch: { $eq: req.session.user._id } },
-  });
+  }).populate("users");
+
   res.status(200).json({
     status: "success",
     chats,
