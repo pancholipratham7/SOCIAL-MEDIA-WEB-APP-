@@ -8,15 +8,18 @@ const router = express.Router();
 //Home page
 router.route("/").get(userController.isLoggedIn, viewController.getHomePage);
 
-//MESSAGES PAGE
+//ALL CHATS  PAGE
 router
   .route("/messages")
-  .get(userController.isLoggedIn, viewController.getMessagesPage);
+  .get(userController.isLoggedIn, viewController.getAllChatsPage);
 
-//NEW MESSAGE PAGE
+// CREATE NEW CHAT PAGE
 router
   .route("/messages/new")
-  .get(userController.isLoggedIn, viewController.getNewMessagePage);
+  .get(userController.isLoggedIn, viewController.getNewChatPage);
+
+// GET MESSAGES PAGE
+router.route("/messages/:chatId").get(viewController.getMessagesPage);
 
 // LOGIN PAGE
 router

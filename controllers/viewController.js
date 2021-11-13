@@ -127,7 +127,7 @@ exports.searchInfoAboutSelectedTab = async (req, res, next) => {
 };
 
 //Messages page
-exports.getMessagesPage = async (req, res, next) => {
+exports.getAllChatsPage = async (req, res, next) => {
   res.status(200).render("inboxPage", {
     userLoggedIn: req.session.user,
     userLoggedInJs: JSON.stringify(req.session.user),
@@ -136,10 +136,33 @@ exports.getMessagesPage = async (req, res, next) => {
 };
 
 //new Message page
-exports.getNewMessagePage = async (req, res, next) => {
+exports.getNewChatPage = async (req, res, next) => {
   res.status(200).render("newMessage", {
     userLoggedIn: req.session.user,
     userLoggedInJs: JSON.stringify(req.session.user),
     pageTitle: "New Message",
+  });
+};
+
+//messages page
+exports.getMessagesPage = async (req, res, next) => {
+  const userId = req.session.user._id;
+  const chatId = req.params.chatId;
+
+  //getting the chat data because it will be helpful on the messages page
+  const chat = await Chat.findOne({
+    _id: chatId,
+    users: { $elemMatch: { $eq: userId } },
+  }).populate("users");
+
+  if (!chat) {
+    //check if that id is really user id
+  }
+
+  res.status(200).render("messagesPage", {
+    userLoggedIn: req.session.user,
+    userLoggedInJs: JSON.stringify(req.session.user),
+    pageTitle: "Messages",
+    chat: chat,
   });
 };
