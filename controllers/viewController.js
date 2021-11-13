@@ -1,5 +1,6 @@
 const User = require("./../models/userModel");
 const Chat = require("./../models/chatModel");
+const mongoose = require("mongoose");
 
 exports.getLoginPage = (req, res, next) => {
   res.status(200).render("login", {
@@ -149,20 +150,72 @@ exports.getMessagesPage = async (req, res, next) => {
   const userId = req.session.user._id;
   const chatId = req.params.chatId;
 
+  //payload
+  const payload = {
+    userLoggedIn: req.session.user,
+    userLoggedInJs: JSON.stringify(req.session.user),
+    pageTitle: "Messages",
+  };
+
+  //Stack overflow validating the id whether the id represents the mongodb Id or not
+  // var ObjectId = require('mongoose').Types.ObjectId;
+  // ObjectId.isValid('microsoft123'); //true
+  // ObjectId.isValid('timtomtamted'); //true
+  // ObjectId.isValid('551137c2f9e1fac808a5f572'); //true
+  if (!mongoose.Types.ObjectId.isValid(chatId)) {
+    payload.errorMessage =
+      "Chat doesn't exist or you don't have the permission to view it 🐱‍💻🐱‍💻🐱‍💻";
+    return res.status(200).render("messagesPage", payload);
+  }
+
   //getting the chat data because it will be helpful on the messages page
-  const chat = await Chat.findOne({
+  let chat = await Chat.findOne({
     _id: chatId,
     users: { $elemMatch: { $eq: userId } },
   }).populate("users");
 
-  if (!chat) {
-    //check if that id is really user id
+  if (chat === null) {
+    //check if that id entered here is actually user id
+    const userFound = await User.findById(chatId);
+    if (userFound != null) {
+      //***This is for the private chat between only two users not a group chat */
+      //This chat will be accessed by the user ID while the group chats were accessed through the chat Id
+      // finding the chat using the userId
+      chat = await getChatByUserId(userFound._id, userId);
+    }
   }
 
-  res.status(200).render("messagesPage", {
-    userLoggedIn: req.session.user,
-    userLoggedInJs: JSON.stringify(req.session.user),
-    pageTitle: "Messages",
-    chat: chat,
-  });
+  if (chat === null) {
+    payload.errorMessage =
+      "Chat doesn't exist or you don't have the permission to view it 🐱‍💻🐱‍💻🐱‍💻";
+  } else {
+    payload.chat = chat;
+  }
+
+  res.status(200).render("messagesPage", payload);
+};
+
+//function for getting the private chat between two users
+const getChatByUserId = async (userLoggedInId, otherUserId) => {
+  return await Chat.findOneAndUpdate(
+    {
+      isGroupChat: false,
+      users: {
+        $size: 2,
+        $all: [
+          { $elemMatch: { $eq: userLoggedInId } },
+          { $elemMatch: { $eq: otherUserId } },
+        ],
+      },
+    },
+    {
+      $setOnInsert: {
+        users: [userLoggedInId, otherUserId],
+      },
+    },
+    {
+      new: true,
+      upsert: true,
+    }
+  ).populate("users");
 };
