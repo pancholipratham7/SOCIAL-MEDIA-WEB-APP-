@@ -122,3 +122,29 @@ mixin createTab(name,href,isSelected)
     a(href=href class=className)
         span #{name}
 
+
+
+//- THis mixin for chatImages is not working properly so i used the js version which is present inside the messagesPages.js file
+//- mixin createChatImage(chatData,userLoggedIn)
+//-     if(!chatData)
+//-         return
+//-     - let i=0
+//-     - const maxImagesToShow=3
+//-     - let remainingUsers=chatData.users.length-maxImagesToShow;
+//-     - remainingUsers-- 
+//-     //- subtracting one because we don't want to show our image
+    
+//-     .chatImagesContainer
+//-         if remainingUsers > 0
+//-             .userCount
+//-                 span +#{remainingUsers}
+
+    
+//-         each user in chatData.users
+//-             if userLoggedIn._id===user._id && chatData.users.length!==1 
+//-                 - continue
+//-             else if i>=maxImagesToShow
+//-                 - break
+
+//-             img(src=user.profilePic alt="User's profile picture",title=user.firstName)
+//-             - i++

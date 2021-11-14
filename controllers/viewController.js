@@ -192,6 +192,8 @@ exports.getMessagesPage = async (req, res, next) => {
     payload.chat = chat;
   }
 
+  payload.chatJs=JSON.stringify(chat);
+
   res.status(200).render("messagesPage", payload);
 };
 
@@ -204,6 +206,7 @@ const getChatByUserId = async (userLoggedInId, otherUserId) => {
         $size: 2,
         $all: [
           // If you will not use mongoose.Types.ObjectId then it will always create a new chat everytime
+          //because in the database these id's will be stored as mongodb id and next time when will match the string id and mongodbId then they will not match hence it will create a new document everytime
           { $elemMatch: { $eq: mongoose.Types.ObjectId(userLoggedInId) } },
           { $elemMatch: { $eq: mongoose.Types.ObjectId(otherUserId) } },
         ],
