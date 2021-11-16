@@ -6,7 +6,6 @@ const getPosts = async function (filter) {
     .populate("postedBy")
     .populate("retweetData")
     .populate("replyTo");
-
   post = await User.populate(post, {
     path: "replyTo.postedBy",
   });

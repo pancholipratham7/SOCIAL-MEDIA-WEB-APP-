@@ -637,6 +637,29 @@ document.addEventListener("click", async function (e) {
   }
 });
 
+//getting the chatName
+//If we have not given our choice on selecting name for the group chat then by default the group chat will be set to all the user's Name
+function getChatName(chatData) {
+  let chatName = chatData.chatName;
+  if (!chatName) {
+    const otherChatUsers = getOtherChatUsers(chatData.users);
+    let namesArray = otherChatUsers.map(
+      (user) => user.firstName + " " + user.lastName
+    );
+    chatName = namesArray.join(", ");
+  }
+
+  return chatName;
+}
+
+function getOtherChatUsers(users) {
+  if (users.length === 1) {
+    console.log(users.length);
+    return users;
+  }
+  return users.filter((user) => user._id !== userLoggedIn._id);
+}
+
 //StackOverflow
 //Changing time recieved from database to twitter standard time format
 function timeDifference(current, previous) {

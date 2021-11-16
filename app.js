@@ -10,6 +10,9 @@ const postRouter = require("./routes/postApiRoutes");
 const userRouter = require("./routes/userApiRoutes");
 const uploadRouter = require("./routes/uploadRoutes");
 const chatRouter=require('./routes/chatApiRoutes');
+const messagesRouter=require('./routes/messagesApiRoutes');
+
+
 
 const app = express();
 
@@ -42,5 +45,7 @@ app.use("/uploads", uploadRouter);
 app.use("/api/posts", postRouter);
 app.use("/api/users", userRouter);
 app.use("/api/chats",chatRouter);
+app.use("/api/messages",messagesRouter);
+
 
 app.use("/", viewRouter);

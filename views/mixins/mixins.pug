@@ -148,3 +148,18 @@ mixin createTab(name,href,isSelected)
 
 //-             img(src=user.profilePic alt="User's profile picture",title=user.firstName)
 //-             - i++
+
+//change the chat Name
+mixin createChatNameModal(chat)
+    #createChatNameModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='createChatNameModalLabel', aria-hidden='true')
+        .modal-dialog(role='document')
+            .modal-content
+                .modal-header
+                    h5#createChatNameModalLabel.modal-title Change the chat name
+                    button.close(type='button', data-dismiss='modal', aria-label='Close')
+                    span(aria-hidden='true') &times;
+                .modal-body
+                    input#chatNameTextBox(type="text",placeholder="Enter a name for this chat",value=chat.chatName)
+                .modal-footer
+                    button.btn.btn-secondary(type='button', data-dismiss='modal') Cancel
+                    button#createChatNameButton.btn.btn-primary Save

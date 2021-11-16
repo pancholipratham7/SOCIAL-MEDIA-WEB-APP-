@@ -1,12 +1,10 @@
 document.addEventListener("DOMContentLoaded", async function (event) {
   const res = await axios.get("/api/chats");
   const chats = res.data.chats;
-  console.log(chats);
   outputChatList(chats, document.querySelector(".resultsContainer"));
 });
 
 function outputChatList(chats, container) {
-  console.log(container);
   chats.forEach((chat) => {
     const html = createChatHtml(chat);
     container.insertAdjacentHTML("afterbegin", html);
@@ -22,7 +20,7 @@ function outputChatList(chats, container) {
 
 function createChatHtml(chatData) {
   const chatName = getChatName(chatData);
-  const latestMessage = "This is the latest message";
+  const latestMessage = getLatestMessage(chatData.latestMessage);
   const image = getChatImageElements(chatData);
 
   return `<a href='/messages/${chatData._id}' class='resultListItem'>
@@ -32,6 +30,15 @@ function createChatHtml(chatData) {
                 <span class='subtext ellipsis'>${latestMessage}</span>
             </div>
     </a>`;
+}
+
+//getting the chat latest message
+function getLatestMessage(latestMessage) {
+  console.log(latestMessage);
+  if (latestMessage) {
+    return `${latestMessage.sender.firstName} ${latestMessage.sender.lastName}: ${latestMessage.content}`;
+  }
+  return "New Chat";
 }
 
 //getting the chatName
@@ -59,7 +66,6 @@ function getOtherChatUsers(users) {
 
 //Get chat image elements
 function getChatImageElements(chatData) {
-  console.log(chatData);
   const otherUsers = getOtherChatUsers(chatData.users);
   let groupChatClass = "";
   let chatImage = getUserChatImageElement(otherUsers[0]);

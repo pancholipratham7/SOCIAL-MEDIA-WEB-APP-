@@ -8,16 +8,18 @@ block content
             const chatData=!{chatJs}
         
         .chatPageContainer
-            .chatTitleBarContainer
-                span#chatName This is the chat
+            .chatTitleBarContainer.ellipsis
+                span#chatName.ellipsis(data-toggle="modal",data-target="#createChatNameModal")
 
             .mainContentContainer 
                 .chatContainer
-                    .chatMessages
+                    ul.chatMessages
                     .footer
-                        textarea(name="messageInput",placeholder="Type a message...")
+                        textarea.inputTextBox(name="messageInput",placeholder="Type a message...")
                         button.sendMessageButton
                             i.fas.fa-paper-plane 
+        
+        +createChatNameModal(chat)                    
 
 block scripts
     script(src='/js/messagesPage.js')
