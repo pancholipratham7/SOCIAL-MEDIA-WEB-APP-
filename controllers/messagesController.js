@@ -39,3 +39,14 @@ exports.sendMessage = (req, res, next) => {
       });
     });
 };
+
+//getting all the previous messages
+exports.getAllMessages = async (req, res, next) => {
+  const messages = await Message.find({ chat: req.query.chatId })
+    .sort({ createdAt: "asc" })
+    .populate("sender");
+  res.status(200).json({
+    status: "success",
+    messages,
+  });
+};

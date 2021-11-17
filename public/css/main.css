@@ -20,6 +20,17 @@ body {
   font-weight: 500;
 }
 
+/* scrollbar design */
+
+*::-webkit-scrollbar {
+  width: 5px;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 20px; /* roundness of the scroll thumb */
+  border: 3px solid #6f6666; /* creates padding around scroll thumb */
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -151,6 +162,7 @@ nav a:hover {
 .mainContentContainer {
   flex: 1;
   display: flex;
+  overflow-y: hidden;
 }
 
 .postContentContainer {
@@ -469,6 +481,7 @@ nav a:hover {
   flex-direction: column;
   min-height: 0;
   flex: 1;
+  flex-basis: 0;
 }
 
 .chatTitleBar {
@@ -689,6 +702,14 @@ nav a:hover {
   max-width: 55%;
 }
 
+.chatMessages .message.mine .messageContainer {
+  align-items: flex-end;
+}
+
+.chatMessages .message.theirs .messageContainer {
+  align-items: flex-start;
+}
+
 .chatMessages .message.mine {
   flex-direction: row-reverse;
 }
@@ -696,4 +717,59 @@ nav a:hover {
 .chatMessages .message.mine .messageBody {
   background-color: var(--blue);
   color: #fff;
+}
+
+.chatMessages .message.mine.first .messageBody {
+  border-bottom-right-radius: 2px;
+}
+
+.chatMessages .message.mine:not(.first):not(.last) .messageBody {
+  border-bottom-right-radius: 2px;
+  border-top-right-radius: 2px;
+}
+
+.chatMessages .message.mine.last .messagebody {
+  border-bottom-right-radius: 18px;
+}
+
+.chatMessages .message.mine.last:not(.first) .messageBody {
+  border-top-right-radius: 2px;
+}
+
+.chatMessages .message.theirs.first .messageBody {
+  border-bottom-left-radius: 2px;
+}
+
+.chatMessages .message.theirs:not(.first):not(.last) .messageBody {
+  border-bottom-left-radius: 2px;
+  border-top-left-radius: 2px;
+}
+
+.chatMessages .message.theirs.last .messagebody {
+  border-bottom-left-radius: 18px;
+}
+
+.chatMessages .message.theirs.last:not(.first) .messageBody {
+  border-top-left-radius: 2px;
+}
+
+.senderName {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.chatMessages .imageContainer {
+  height: 24px;
+  width: 24px;
+  margin-right: 7px;
+}
+
+.chatMessages img {
+  height: 100%;
+  border-radius: 50%;
+  vertical-align: bottom;
+}
+
+/* for changing space between other user's chat */
+.chatMessages .message.last {
+  margin-bottom: 30px;
 }

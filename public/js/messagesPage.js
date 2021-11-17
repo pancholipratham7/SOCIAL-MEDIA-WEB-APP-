@@ -1,3 +1,5 @@
+let containerX = "";
+
 document.addEventListener("DOMContentLoaded", async function (e) {
   // ADDING USER IMAGES ON THE MESSAGES PAGE
   const chatImageHtmlMarkup = createChatImages(chatData, userLoggedIn);
@@ -13,6 +15,26 @@ document.addEventListener("DOMContentLoaded", async function (e) {
   document.getElementById("chatName").textContent = getChatName(
     chatInfo.data.chat
   );
+
+  // outputting all the previous chat messages
+  let allPreviousMessages = await axios.get("/api/messages", {
+    params: { chatId: chatId },
+  });
+
+  let lastSenderId = "";
+  outputAllPreviousMessages(allPreviousMessages.data.messages);
+
+  function outputAllPreviousMessages(prevMessages) {
+    console.log(prevMessages);
+    if (prevMessages.length === 0) {
+      return;
+    }
+    prevMessages.forEach((message, index) => {
+      addChatMessageHtml(message, prevMessages[index + 1], lastSenderId);
+      lastSenderId = message.sender._id;
+    });
+    scrollToBottom(false);
+  }
 
   //adding the event to send Message Button
   document
@@ -38,7 +60,6 @@ document.addEventListener("DOMContentLoaded", async function (e) {
     if (content) {
       await sendMessage(content);
       document.querySelector(".inputTextBox").value = "";
-      console.log("Message Submitted");
     }
   }
 
@@ -54,41 +75,81 @@ document.addEventListener("DOMContentLoaded", async function (e) {
       return;
     }
 
-    console.log(res.data.message);
-    addChatMessageHtml(res.data.message);
+    addChatMessageHtml(res.data.message, null, lastSenderId);
   }
 
   // function for adding sent message  on the message page
-  function addChatMessageHtml(message) {
+  function addChatMessageHtml(message, nextMessage, lastSenderId) {
     if (!message || !message._id) {
       return alert("Message is not valid");
     }
-    const messageDiv = createMessageHtml(message);
-    document
-      .querySelector(".chatMessages")
-      .insertAdjacentHTML("beforeend", messageDiv);
+    const messageDiv = createMessageHtml(message, nextMessage, lastSenderId);
+    addMessagesHtmlToPage(messageDiv);
   }
 
   //creating the messageHtml
-  function createMessageHtml(message) {
+  function createMessageHtml(message, nextMessage, lastSenderId) {
+    console.log(message);
+    console.log(nextMessage);
+    console.log(lastSenderId);
+
+    const sender = message.sender;
+    const senderName = `${sender.firstName} ${sender.lastName}`;
+    const currentSenderId = sender._id;
+    const nextSenderId = nextMessage != null ? nextMessage.sender._id : "";
+    const isFirst = lastSenderId != currentSenderId;
+    const isLast = nextSenderId != currentSenderId;
+
     const isMine = message.sender._id === userLoggedIn._id;
-    const liClassName = isMine ? "mine" : "theirs";
+    let liClassName = isMine ? "mine" : "theirs";
+    let senderNameElement = "";
+
+    if (isFirst) {
+      liClassName += " first";
+      if (!isMine) {
+        senderNameElement = `<span class="senderName">${senderName}</span>`;
+      }
+    }
+
+    let profileImageMessageElement = "";
+
+    if (isLast) {
+      liClassName += " last";
+      profileImageMessageElement = `<img src="${sender.profilePic}">`;
+    }
+
+    let messageImageContainer = "";
+    if (!isMine) {
+      messageImageContainer = `<div class="imageContainer">
+                                  ${profileImageMessageElement}
+                               </div>`;
+    }
+
     return `<li class='message ${liClassName}'>
+              ${messageImageContainer}
               <div class='messageContainer'>
-                <span class='messageBody'>
-                  ${message.content}
-                </span>
+                  ${senderNameElement}
+                  <span class='messageBody'>
+                    ${message.content}
+                  </span>
               </div>
-            </li>`;
+             </li>`;
+  }
+
+  // adding messages Html to the page
+  function addMessagesHtmlToPage(messageDiv) {
+    document
+      .querySelector(".chatMessages")
+      .insertAdjacentHTML("beforeend", messageDiv);
+
+    // scroll to bottom
   }
 
   //adding event on the button to save the changed chat Name
   document
     .getElementById("createChatNameButton")
     .addEventListener("click", async function (e) {
-      console.log("hi");
       const chatName = document.getElementById("chatNameTextBox").value.trim();
-      console.log(chatName);
       const res = await axios.put(`/api/chats/${chatId}`, {
         chatName: chatName,
       });
@@ -98,6 +159,19 @@ document.addEventListener("DOMContentLoaded", async function (e) {
         alert("Could Not update chat Name");
       }
     });
+
+  //scrolling to the bottom page
+  function scrollToBottom(animated) {
+    const container = document.querySelector(".chatMessages");
+    containerX = container;
+    const scrollHeight = container.scrollHeight;
+    console.log(scrollHeight);
+    if (animated) {
+      //////
+    } else {
+      container.scrollTop = scrollHeight;
+    }
+  }
 });
 
 function createChatImages(chatData, userLoggedIn) {
