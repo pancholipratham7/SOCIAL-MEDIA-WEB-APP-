@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", async function (e) {
       addChatMessageHtml(message, prevMessages[index + 1], lastSenderId);
       lastSenderId = message.sender._id;
     });
-    scrollToBottom(false);
+    scrollToBottom();
   }
 
   //adding the event to send Message Button
@@ -76,6 +76,7 @@ document.addEventListener("DOMContentLoaded", async function (e) {
     }
 
     addChatMessageHtml(res.data.message, null, lastSenderId);
+    scrollToBottom();
   }
 
   // function for adding sent message  on the message page
@@ -161,16 +162,11 @@ document.addEventListener("DOMContentLoaded", async function (e) {
     });
 
   //scrolling to the bottom page
-  function scrollToBottom(animated) {
+  function scrollToBottom() {
     const container = document.querySelector(".chatMessages");
-    containerX = container;
     const scrollHeight = container.scrollHeight;
-    console.log(scrollHeight);
-    if (animated) {
-      //////
-    } else {
-      container.scrollTop = scrollHeight;
-    }
+
+    container.scrollTop = scrollHeight;
   }
 });
 
