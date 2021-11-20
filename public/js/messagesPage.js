@@ -1,6 +1,21 @@
-let containerX = "";
+let lastTypingTime = "";
+let typing = false;
 
 document.addEventListener("DOMContentLoaded", async function (e) {
+  //JOINING A CHAT ROOM FIRST
+  socket.emit("join room", chatId);
+
+  // handling the typing event at the client side
+  socket.on("typing", (data) => {
+    document.querySelector(".typingDots").style.display = "block";
+    console.log(`${data.user} is typing`);
+  });
+
+  // handling the stopping typing indicator event
+  socket.on("stop typing", () => {
+    document.querySelector(".typingDots").style.display = "none";
+  });
+
   // ADDING USER IMAGES ON THE MESSAGES PAGE
   const chatImageHtmlMarkup = createChatImages(chatData, userLoggedIn);
   document
@@ -47,6 +62,9 @@ document.addEventListener("DOMContentLoaded", async function (e) {
   document
     .querySelector(".inputTextBox")
     .addEventListener("keydown", async function (e) {
+      //updating the typing
+      updateTyping();
+
       if (e.key === "Enter") {
         // This is important because enter automatically adds a new line
         //preventDefault will stop the default behaviour
@@ -167,6 +185,31 @@ document.addEventListener("DOMContentLoaded", async function (e) {
     const scrollHeight = container.scrollHeight;
 
     container.scrollTop = scrollHeight;
+  }
+
+  //function for updating the typing notification
+  function updateTyping() {
+    // if we are not connected to sockets then we need to return
+    if (!connected) return;
+
+    if (!typing) {
+      socket.emit("typing", { user: userLoggedIn, chatId: chatId });
+      typing = true;
+    }
+
+    // ALL LOGIC FOR STOPPING TYPING INDICATOR
+
+    lastTypingTime = new Date().getTime();
+    const timerLength = 3000;
+    setTimeout(() => {
+      const currentTypingTime = new Date().getTime();
+      const typingTimeDiff = currentTypingTime - lastTypingTime;
+      if (typingTimeDiff >= timerLength && typing) {
+        console.log("Stopping the typing Indicator");
+        socket.emit("stop typing", chatId);
+        typing = false;
+      }
+    }, timerLength);
   }
 });
 
