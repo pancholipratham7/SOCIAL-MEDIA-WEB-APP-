@@ -1,3 +1,4 @@
+const Notification = require("../models/notificationsModel");
 const Post = require("./../models/postModel");
 const User = require("./../models/userModel");
 
@@ -27,6 +28,18 @@ exports.createPost = async (req, res, next) => {
 
   let newPost = await Post.create(postData);
   newPost = await newPost.populate("postedBy");
+  newPost = await Post.populate(newPost, { path: "replyTo" });
+
+  //inserting the reply to Post notification in the database
+  if (newPost.replyTo !== undefined) {
+    await Notification.insertNotification(
+      newPost.replyTo.postedBy,
+      req.session.user._id,
+      "reply",
+      newPost._id
+    );
+  }
+
   return res.status(200).json({
     status: "success",
     data: newPost,
@@ -140,6 +153,16 @@ exports.controlPostLike = async (req, res, next) => {
     { new: true }
   );
 
+  //storing the like notification in the database
+  if (!isLiked) {
+    await Notification.insertNotification(
+      post.postedBy,
+      userId,
+      "postLike",
+      post._id
+    );
+  }
+
   res.status(200).json({
     status: "success",
     post,
@@ -180,6 +203,17 @@ exports.controlRetweet = async (req, res, next) => {
     { [option]: { retweetUsers: userId } },
     { new: true }
   );
+
+  //storing the retweet notification in the database
+
+  if (!deletedPost) {
+    await Notification.insertNotification(
+      post.postedBy,
+      req.session.user._id,
+      "retweet",
+      post._id
+    );
+  }
 
   res.status(200).json({
     status: "success",

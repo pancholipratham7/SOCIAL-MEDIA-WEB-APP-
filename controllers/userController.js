@@ -1,6 +1,7 @@
 const User = require("./../models/userModel");
 const path = require("path");
 const fs = require("fs");
+const Notification = require("./../models/notificationsModel");
 
 exports.isLoggedIn = (req, res, next) => {
   if (req.session && req.session.user) {
@@ -55,7 +56,18 @@ exports.follow = async (req, res, next) => {
       { [option]: { following: req.params.userId } },
       { new: true }
     );
+
+    // inserting the notification in the database---- the  following notification
+    if (!isFollowing) {
+      await Notification.insertNotification(
+        req.params.userId,
+        req.session.user._id,
+        "follow",
+        req.session.user._id
+      );
+    }
   }
+
   res.status(200).json({
     status: "success",
     user: req.session.user,

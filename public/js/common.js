@@ -3,6 +3,31 @@ let cropper;
 let timer;
 let selectedUsers = [];
 
+// GETTING THE MESSAGE NOTIIFICATIONS
+document.addEventListener("DOMContentLoaded", function (e) {
+  refreshMessagesBadge();
+  refreshNotificationsBadge();
+});
+
+// function for refreshing notifications Badge
+const refreshNotificationsBadge = () => {
+  axios
+    .get("/api/notifications", { params: { unreadOnly: true } })
+    .then((results) => {
+      console.log(results.data);
+      const notificationsNo = results.data.notifications.length;
+      if (notificationsNo > 0) {
+        document.getElementById("notificationsBadge").textContent =
+          notificationsNo;
+        document.getElementById("notificationsBadge").classList.add("active");
+      } else {
+        document
+          .getElementById("notificationsBadge")
+          .classList.remove("active");
+      }
+    });
+};
+
 //Adding text area
 if (document.querySelector(".tweetPost")) {
   document
@@ -52,7 +77,6 @@ function createPostHtml(postData, largeFont = false) {
   let replyFlag = "";
   if (postData.replyTo && postData.replyTo._id) {
     if (!postData.replyTo._id) {
-      console.log(postData.replyTo);
       return alert("Reply to field id not present");
     } else if (!postData.replyTo.postedBy._id) {
       return alert("PostedBy is not populated");
@@ -178,7 +202,6 @@ $("#replyModal").on("hidden.bs.modal", async function (e) {
 $("#deletePostModal").on("show.bs.modal", async function (e) {
   const postId = e.relatedTarget.dataset.id;
   document.getElementById("deletePostButton").dataset.id = postId;
-  console.log(document.getElementById("deletePostButton").dataset.id);
 });
 
 //ADDING EVENT TO DELETE POST BUTTON
@@ -237,6 +260,7 @@ const replyPostBtn = document.getElementById("submitReplyButton");
         document.querySelector(".noResults").remove();
       }
       if (isModal) {
+        emitNotification(result.data.replyTo.postedBy);
         return location.reload(true);
       }
       const html = createPostHtml(result.data);
@@ -281,6 +305,7 @@ document.addEventListener("click", async function (e) {
       }
       if (res.post.likes.includes(userLoggedIn._id)) {
         likeBtn.classList.add("active");
+        emitNotification(res.post.postedBy);
       } else {
         likeBtn.classList.remove("active");
       }
@@ -308,6 +333,7 @@ document.addEventListener("click", async function (e) {
       }
       if (res.post.retweetUsers.includes(userLoggedIn._id)) {
         retweetBtn.classList.add("active");
+        emitNotification(res.post.postedBy);
       } else {
         retweetBtn.classList.remove("active");
       }
@@ -336,6 +362,8 @@ document.addEventListener("click", async function (e) {
           followersValue + 1
         }`;
       }
+
+      emitNotification(userId);
     } else {
       followBtn.classList.remove("following");
       followBtn.textContent = "Follow";
@@ -787,4 +815,175 @@ function createUserHtml(userData, showFollowButton) {
               </div>
             </div>
             ${htmlFollowButton}`;
+}
+
+// function for marking notification as read
+const markNotificationsAsOpened = async (
+  notificationId = null,
+  callback = null
+) => {
+  if (callback === null)
+    callback = () => {
+      location.reload();
+    };
+
+  const url =
+    notificationId != null
+      ? `/api/notifications/${notificationId}/markAsOpened`
+      : `/api/notifications/markAsOpened`;
+
+  const res = await axios.put(url);
+  if (res.data.status === "success") {
+    callback();
+  }
+};
+
+// adding event to the unopened notification
+document.addEventListener("click", async function (e) {
+  if (e.target.closest(".notificationActive")) {
+    e.preventDefault();
+    const notificationId = document.querySelector(".notificationActive").dataset
+      .id;
+    const href = e.target.closest(".notificationActive").getAttribute("href");
+    const callback = () => {
+      window.location = href;
+    };
+    await markNotificationsAsOpened(notificationId, callback);
+  }
+});
+
+//NOTIFICATION HTML CREATION
+
+function createNotificationHtml(notification) {
+  const text = getNotificationText(notification);
+  const url = getNotificationUrl(notification);
+  const className = notification.opened ? "" : "notificationActive";
+  return `<a href="${url}" class="resultListItem notification ${className}" data-id=${notification._id}><div class="resultsImageContainer"><img src=${notification.userFrom.profilePic}></div><div class="resultsDetailsContainer ellipsis"><span class="ellipsis">${text}</span></div></a>`;
+}
+
+//generating the notification text
+function getNotificationText(notification) {
+  const userFrom = notification.userFrom;
+  if (!userFrom.firstName || !userFrom.lastName) {
+    return alert("userFrom not populated");
+  }
+
+  let text = "";
+
+  const userFromName = `${userFrom.firstName} ${userFrom.lastName}`;
+
+  if (notification.notificationType === "retweet") {
+    text = `${userFromName} retweeted one of your posts`;
+  } else if (notification.notificationType === "postLike") {
+    text = `${userFromName} liked one of your posts`;
+  } else if (notification.notificationType === "reply") {
+    text = `${userFromName} replied to one of your posts`;
+  } else if (notification.notificationType === "follow") {
+    text = `${userFromName} started following you`;
+  }
+  return `${text}`;
+}
+
+//generating the notification URl
+function getNotificationUrl(notification) {
+  let url = "";
+
+  if (
+    notification.notificationType === "retweet" ||
+    notification.notificationType === "postLike" ||
+    notification.notificationType === "reply"
+  ) {
+    url = `/post/${notification.entityId}`;
+  } else if (notification.notificationType === "follow") {
+    url = `/profile/${notification.entityId}`;
+  }
+  return url;
+}
+
+//showing notification popup
+function showNotificationPopup(data) {
+  const html = createNotificationHtml(data);
+  const container = document.getElementById("notificationList");
+  container.insertAdjacentHTML("afterbegin", html);
+  setTimeout(() => {
+    document.querySelector(".notification").style.display = "none";
+  }, 5000);
+}
+
+//showing message notification popup
+function showMessageNotificationPopup(data) {
+  console.log(data);
+  if (!data.chat.latestMessage._id) {
+    data.chat.latestMessage = data;
+  }
+  const html = createChatHtml(data.chat);
+  const container = document.getElementById("notificationList");
+  container.insertAdjacentHTML("afterbegin", html);
+  setTimeout(() => {
+    document.querySelector(".messageNotification").style.display = "none";
+  }, 5000);
+}
+
+//getting the chat latest message
+function getLatestMessage(latestMessage) {
+  console.log(latestMessage);
+  if (latestMessage) {
+    return `${latestMessage.sender.firstName} ${latestMessage.sender.lastName}: ${latestMessage.content}`;
+  }
+  return "New Chat";
+}
+
+//getting the chatName
+//If we have not given our choice on selecting name for the group chat then by default the group chat will be set to all the user's Name
+function getChatName(chatData) {
+  let chatName = chatData.chatName;
+  if (!chatName) {
+    const otherChatUsers = getOtherChatUsers(chatData.users);
+    let namesArray = otherChatUsers.map(
+      (user) => user.firstName + " " + user.lastName
+    );
+    chatName = namesArray.join(", ");
+  }
+
+  return chatName;
+}
+
+function getOtherChatUsers(users) {
+  if (users.length === 1) {
+    console.log(users.length);
+    return users;
+  }
+  return users.filter((user) => user._id !== userLoggedIn._id);
+}
+
+//Get chat image elements
+function getChatImageElements(chatData) {
+  const otherUsers = getOtherChatUsers(chatData.users);
+  let groupChatClass = "";
+  let chatImage = getUserChatImageElement(otherUsers[0]);
+  if (otherUsers.length > 1) {
+    groupChatClass = "groupChatImage";
+    chatImage = chatImage + getUserChatImageElement(otherUsers[1]);
+  }
+  return `<div class='resultsImageContainer ${groupChatClass}'>${chatImage}</div>`;
+}
+
+function getUserChatImageElement(user) {
+  if (!user || !user.profilePic) {
+    return alert("User passed in the function is invalid");
+  }
+  return `<img src=${user.profilePic} alt="User's profile picture">`;
+}
+
+// function for message received
+function messageReceived(newMessage) {
+  console.log(newMessage);
+  if (document.querySelector(".chatContainer") === null) {
+    //showing popup notification
+    showMessageNotificationPopup(newMessage);
+
+    return;
+  }
+  addChatMessageHtml(newMessage);
+  scrollToBottom();
 }

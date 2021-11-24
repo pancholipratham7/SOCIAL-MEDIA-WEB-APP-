@@ -73,4 +73,9 @@ router
   .route("/search/:selectedTab")
   .get(userController.isLoggedIn, viewController.searchInfoAboutSelectedTab);
 
+// route for the notifications page
+router
+  .route("/notifications")
+  .get(userController.isLoggedIn, viewController.getNotificationsPage);
+
 module.exports = router;

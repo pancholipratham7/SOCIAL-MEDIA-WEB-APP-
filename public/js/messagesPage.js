@@ -1,5 +1,6 @@
 let lastTypingTime = "";
 let typing = false;
+let lastSenderId = "";
 
 document.addEventListener("DOMContentLoaded", async function (e) {
   //JOINING A CHAT ROOM FIRST
@@ -36,10 +37,9 @@ document.addEventListener("DOMContentLoaded", async function (e) {
     params: { chatId: chatId },
   });
 
-  let lastSenderId = "";
   outputAllPreviousMessages(allPreviousMessages.data.messages);
 
-  function outputAllPreviousMessages(prevMessages) {
+  async function outputAllPreviousMessages(prevMessages) {
     console.log(prevMessages);
     if (prevMessages.length === 0) {
       return;
@@ -49,6 +49,7 @@ document.addEventListener("DOMContentLoaded", async function (e) {
       lastSenderId = message.sender._id;
     });
     scrollToBottom();
+    await markAllMessagesAsRead();
   }
 
   //adding the event to send Message Button
@@ -79,6 +80,8 @@ document.addEventListener("DOMContentLoaded", async function (e) {
       await sendMessage(content);
       document.querySelector(".inputTextBox").value = "";
     }
+    socket.emit("stop typing", chatId);
+    typing = false;
   }
 
   async function sendMessage(content) {
@@ -94,74 +97,10 @@ document.addEventListener("DOMContentLoaded", async function (e) {
     }
 
     addChatMessageHtml(res.data.message, null, lastSenderId);
+    if (connected) {
+      socket.emit("new message", res.data.message);
+    }
     scrollToBottom();
-  }
-
-  // function for adding sent message  on the message page
-  function addChatMessageHtml(message, nextMessage, lastSenderId) {
-    if (!message || !message._id) {
-      return alert("Message is not valid");
-    }
-    const messageDiv = createMessageHtml(message, nextMessage, lastSenderId);
-    addMessagesHtmlToPage(messageDiv);
-  }
-
-  //creating the messageHtml
-  function createMessageHtml(message, nextMessage, lastSenderId) {
-    console.log(message);
-    console.log(nextMessage);
-    console.log(lastSenderId);
-
-    const sender = message.sender;
-    const senderName = `${sender.firstName} ${sender.lastName}`;
-    const currentSenderId = sender._id;
-    const nextSenderId = nextMessage != null ? nextMessage.sender._id : "";
-    const isFirst = lastSenderId != currentSenderId;
-    const isLast = nextSenderId != currentSenderId;
-
-    const isMine = message.sender._id === userLoggedIn._id;
-    let liClassName = isMine ? "mine" : "theirs";
-    let senderNameElement = "";
-
-    if (isFirst) {
-      liClassName += " first";
-      if (!isMine) {
-        senderNameElement = `<span class="senderName">${senderName}</span>`;
-      }
-    }
-
-    let profileImageMessageElement = "";
-
-    if (isLast) {
-      liClassName += " last";
-      profileImageMessageElement = `<img src="${sender.profilePic}">`;
-    }
-
-    let messageImageContainer = "";
-    if (!isMine) {
-      messageImageContainer = `<div class="imageContainer">
-                                  ${profileImageMessageElement}
-                               </div>`;
-    }
-
-    return `<li class='message ${liClassName}'>
-              ${messageImageContainer}
-              <div class='messageContainer'>
-                  ${senderNameElement}
-                  <span class='messageBody'>
-                    ${message.content}
-                  </span>
-              </div>
-             </li>`;
-  }
-
-  // adding messages Html to the page
-  function addMessagesHtmlToPage(messageDiv) {
-    document
-      .querySelector(".chatMessages")
-      .insertAdjacentHTML("beforeend", messageDiv);
-
-    // scroll to bottom
   }
 
   //adding event on the button to save the changed chat Name
@@ -178,14 +117,6 @@ document.addEventListener("DOMContentLoaded", async function (e) {
         alert("Could Not update chat Name");
       }
     });
-
-  //scrolling to the bottom page
-  function scrollToBottom() {
-    const container = document.querySelector(".chatMessages");
-    const scrollHeight = container.scrollHeight;
-
-    container.scrollTop = scrollHeight;
-  }
 
   //function for updating the typing notification
   function updateTyping() {
@@ -247,4 +178,126 @@ function createChatImages(chatData, userLoggedIn) {
             ${userCount}
             ${chatImageHtml}
           </div>`;
+}
+
+// function for adding sent message  on the message page
+function addChatMessageHtml(message, nextMessage, lastSenderId) {
+  if (!message || !message._id) {
+    return alert("Message is not valid");
+  }
+  const messageDiv = createMessageHtml(message, nextMessage, lastSenderId);
+  addMessagesHtmlToPage(messageDiv);
+}
+
+//creating the messageHtml
+function createMessageHtml(message, nextMessage, lastSenderId) {
+  console.log(message);
+  console.log(nextMessage);
+  console.log(lastSenderId);
+
+  const sender = message.sender;
+  const senderName = `${sender.firstName} ${sender.lastName}`;
+  const currentSenderId = sender._id;
+  const nextSenderId = nextMessage != null ? nextMessage.sender._id : "";
+  const isFirst = lastSenderId != currentSenderId;
+  const isLast = nextSenderId != currentSenderId;
+
+  const isMine = message.sender._id === userLoggedIn._id;
+  let liClassName = isMine ? "mine" : "theirs";
+  let senderNameElement = "";
+
+  if (isFirst) {
+    liClassName += " first";
+    if (!isMine) {
+      senderNameElement = `<span class="senderName">${senderName}</span>`;
+    }
+  }
+
+  let profileImageMessageElement = "";
+
+  if (isLast) {
+    liClassName += " last";
+    profileImageMessageElement = `<img src="${sender.profilePic}">`;
+  }
+
+  let messageImageContainer = "";
+  if (!isMine) {
+    messageImageContainer = `<div class="imageContainer">
+                                  ${profileImageMessageElement}
+                               </div>`;
+  }
+
+  return `<li class='message ${liClassName}'>
+              ${messageImageContainer}
+              <div class='messageContainer'>
+                  ${senderNameElement}
+                  <span class='messageBody'>
+                    ${message.content}
+                  </span>
+              </div>
+             </li>`;
+}
+
+// adding messages Html to the page
+function addMessagesHtmlToPage(messageDiv) {
+  document
+    .querySelector(".chatMessages")
+    .insertAdjacentHTML("beforeend", messageDiv);
+
+  // scroll to bottom
+}
+
+//scrolling to the bottom page
+function scrollToBottom() {
+  const container = document.querySelector(".chatMessages");
+  const scrollHeight = container.scrollHeight;
+
+  container.scrollTop = scrollHeight;
+}
+
+//function for refreshing the message Badge
+const refreshMessagesBadge = () => {
+  axios
+    .get("/api/chats", { params: { unreadOnly: "true" } })
+    .then((results) => {
+      console.log("Message notifications");
+      console.log(results.data);
+      const messageNotificationsNo = results.data.chats.length;
+      if (messageNotificationsNo === null || messageNotificationsNo === 0) {
+        document.getElementById("messagesBadge").classList.remove("active");
+      } else {
+        document.getElementById("messagesBadge").textContent =
+          messageNotificationsNo;
+        document.getElementById("messagesBadge").classList.add("active");
+      }
+    });
+};
+
+//FUNCTION FOR MARKING ALL MESSAGES AS READ
+async function markAllMessagesAsRead() {
+  const res = await axios.put(`/api/messages/${chatId}/markAllMessagesAsRead`);
+  refreshMessagesBadge();
+}
+
+//getting the chatName
+//If we have not given our choice on selecting name for the group chat then by default the group chat will be set to all the user's Name
+function getChatName(chatData) {
+  let chatName = chatData.chatName;
+  if (!chatName) {
+    const otherChatUsers = getOtherChatUsers(chatData.users);
+    let namesArray = otherChatUsers.map(
+      (user) => user.firstName + " " + user.lastName
+    );
+    chatName = namesArray.join(", ");
+  }
+
+  return chatName;
+}
+
+function getOtherChatUsers(users) {
+  if (users.length === 1) {
+    console.log(users.length);
+    return users;
+  }
+  return users.filter((user) => user._id !== userLoggedIn._id);
 }

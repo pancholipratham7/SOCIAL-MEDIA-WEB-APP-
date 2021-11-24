@@ -7,4 +7,9 @@ router
   .post(messagesController.sendMessage)
   .get(messagesController.getAllMessages);
 
+//marking all the messages of a chat as read
+router
+  .route("/:chatId/markAllMessagesAsRead")
+  .put(messagesController.markAllMessagesAsRead);
+
 module.exports = router;

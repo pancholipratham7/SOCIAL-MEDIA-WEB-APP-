@@ -11,6 +11,7 @@ const userRouter = require("./routes/userApiRoutes");
 const uploadRouter = require("./routes/uploadRoutes");
 const chatRouter = require("./routes/chatApiRoutes");
 const messagesRouter = require("./routes/messagesApiRoutes");
+const NotificationsRouter = require("./routes/notificationsApiRoutes");
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use("/api/posts", postRouter);
 app.use("/api/users", userRouter);
 app.use("/api/chats", chatRouter);
 app.use("/api/messages", messagesRouter);
+app.use("/api/notifications", NotificationsRouter);
 
 app.use("/", viewRouter);
 
@@ -74,5 +76,29 @@ io.on("connection", (socket) => {
   // stopping typing indicator
   socket.on("stop typing", (room) => {
     socket.in(room).emit("stop typing");
+  });
+
+  // new message notification event handling
+  socket.on("new message", (newMessage) => {
+    console.log("lawde ka message");
+    console.log(newMessage);
+    const chat = newMessage.chat;
+    if (!chat.users) {
+      console.log("chat.users not defined");
+      return;
+    }
+    chat.users.forEach((user) => {
+      if (user._id === newMessage.sender._id) return;
+      else {
+        socket.in(user._id).emit("message received", newMessage);
+      }
+    });
+  });
+
+  //new notifications events (like,reply,retweet,follow)
+  socket.on("notification received", (room) => {
+    console.log(room);
+    console.log(typeof room);
+    socket.in(room).emit("notification received", "Notification received");
   });
 });

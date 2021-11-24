@@ -192,7 +192,7 @@ exports.getMessagesPage = async (req, res, next) => {
     payload.chat = chat;
   }
 
-  payload.chatJs=JSON.stringify(chat);
+  payload.chatJs = JSON.stringify(chat);
 
   res.status(200).render("messagesPage", payload);
 };
@@ -222,4 +222,13 @@ const getChatByUserId = async (userLoggedInId, otherUserId) => {
       upsert: true,
     }
   ).populate("users");
+};
+
+//get the notifications page
+exports.getNotificationsPage = (req, res, next) => {
+  res.status(200).render("notifications", {
+    userLoggedIn: req.session.user,
+    userLoggedInJs: JSON.stringify(req.session.user),
+    pageTitle: "Notifications",
+  });
 };

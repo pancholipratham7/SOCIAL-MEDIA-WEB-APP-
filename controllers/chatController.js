@@ -32,7 +32,6 @@ exports.createChat = async (req, res, next) => {
 
 //get chats
 exports.getChats = async (req, res, next) => {
-  console.log("Babar");
   //Loading all our chats
   let chats = await Chat.find({
     users: { $elemMatch: { $eq: req.session.user._id } },
@@ -40,9 +39,16 @@ exports.getChats = async (req, res, next) => {
     .populate("users")
     .populate("latestMessage")
     .sort({ updatedAt: 1 });
-  console.log(chats);
+
+  if (req.query.unreadOnly !== undefined && req.query.unreadOnly === "true") {
+    console.log("Yes we want unread messages Only");
+    chats = chats.filter(
+      (chat) =>
+        chat.latestMessage &&
+        !chat.latestMessage.readBy.includes(req.session.user._id)
+    );
+  }
   chats = await User.populate(chats, { path: "latestMessage.sender" });
-  console.log(chats);
 
   res.status(200).json({
     status: "success",

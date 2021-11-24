@@ -6,3 +6,28 @@ socket.emit("setup", userLoggedIn);
 socket.on("connected", () => {
   connected = true;
 });
+
+//we are adding this here because when you will revieve this event you can be either on the home page or chat page or anywhere else
+//new message notification socket io
+socket.on("message received", (newMessage) => {
+  messageReceived(newMessage);
+});
+
+//NOTIFICATION EVENTS
+socket.on("notification received", async (newNotification) => {
+  const res = await axios.get("/api/notifications/latest");
+  refreshNotificationsBadge();
+  console.log(res.data.notification);
+  showNotificationPopup(res.data.notification);
+});
+
+//function for emitting notification
+function emitNotification(userId) {
+  //the user id will be basically the user to whom you want to send the notification
+  console.log(userId);
+  if (userId === userLoggedIn._id) {
+    console.log("fibiugbie");
+    return;
+  }
+  socket.emit("notification received", userId);
+}
