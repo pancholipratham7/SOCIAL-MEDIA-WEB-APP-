@@ -61,13 +61,11 @@ io.on("connection", (socket) => {
 
   //this for joining the chat room
   socket.on("join room", (room) => {
-    console.log(room);
     socket.join(room);
   });
 
   //handling the typing event
   socket.on("typing", (typingData) => {
-    console.log(typingData);
     socket
       .in(typingData.chatId)
       .emit("typing", { user: typingData.user.firstName });
@@ -80,11 +78,8 @@ io.on("connection", (socket) => {
 
   // new message notification event handling
   socket.on("new message", (newMessage) => {
-    console.log("lawde ka message");
-    console.log(newMessage);
     const chat = newMessage.chat;
     if (!chat.users) {
-      console.log("chat.users not defined");
       return;
     }
     chat.users.forEach((user) => {
@@ -97,8 +92,6 @@ io.on("connection", (socket) => {
 
   //new notifications events (like,reply,retweet,follow)
   socket.on("notification received", (room) => {
-    console.log(room);
-    console.log(typeof room);
     socket.in(room).emit("notification received", "Notification received");
   });
 });

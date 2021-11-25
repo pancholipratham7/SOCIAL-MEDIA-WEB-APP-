@@ -14,7 +14,6 @@ const refreshNotificationsBadge = () => {
   axios
     .get("/api/notifications", { params: { unreadOnly: true } })
     .then((results) => {
-      console.log(results.data);
       const notificationsNo = results.data.notifications.length;
       if (notificationsNo > 0) {
         document.getElementById("notificationsBadge").textContent =
@@ -217,7 +216,6 @@ if (document.getElementById("deletePostButton")) {
       if (res.status === "success") {
         location.reload(true);
       } else if (res.status === "failed") {
-        console.log(res.err);
         alert(res.err);
       }
     });
@@ -290,13 +288,11 @@ document.addEventListener("click", function (e) {
 document.addEventListener("click", async function (e) {
   const likeBtn = e.target.closest(".likeButton");
   if (likeBtn) {
-    console.log(1);
     if (likeBtn.closest(".post")) {
       const postId = likeBtn.closest(".post").dataset.id;
       let res = await fetch(`/api/posts/${postId}/like`, {
         method: "PUT",
       });
-      console.log(likeBtn.lastElementChild);
       res = await res.json();
       if (res.post.likes.length) {
         likeBtn.lastElementChild.textContent = res.post.likes.length;
@@ -322,9 +318,7 @@ document.addEventListener("click", async function (e) {
       let res = await fetch(`/api/posts/${postId}/retweet`, {
         method: "POST",
       });
-      // console.log(retweetBtn.lastElementChild);
       res = await res.json();
-      console.log(res.post.retweetUsers.length);
 
       if (res.post.retweetUsers.length) {
         retweetBtn.lastElementChild.textContent = res.post.retweetUsers.length;
@@ -346,12 +340,10 @@ document.addEventListener("click", async function (e) {
   if (e.target.closest(".followBtn")) {
     const followBtn = e.target.closest(".followBtn");
     const userId = followBtn.dataset.userid;
-    console.log(userId);
     let userData = await fetch(`/api/users/${userId}/follow`, {
       method: "PUT",
     });
     userData = await userData.json();
-    console.log(userData.user);
     if (userData.user.following.includes(userId)) {
       followBtn.classList.add("following");
       followBtn.textContent = "Following";
@@ -503,14 +495,12 @@ if (document.getElementById("coverPhotoUploadButton")) {
 
 //Listening to the opening of pin Modal event
 $("#pinPostModal").on("show.bs.modal", function (e) {
-  // console.log(e.relatedTarget);
   const postId = e.relatedTarget.dataset.id;
   document.getElementById("pinPostButton").dataset.postId = postId;
 });
 
 //Listening to the opening of unpin Modal event
 $("#unpinModal").on("show.bs.modal", function (e) {
-  // console.log(e.relatedTarget);
   const postId = e.relatedTarget.dataset.id;
   document.getElementById("unpinPostButton").dataset.postId = postId;
 });
@@ -526,7 +516,6 @@ document.addEventListener("click", async function (e) {
         pinned: true,
       },
     });
-    console.log(res.data);
     if (res.data.status === "success") {
       location.reload();
     }
@@ -635,13 +624,11 @@ function usersSelected(user) {
 
 function showSelectedUsers() {
   let selectedUsersHtml = "";
-  console.log(selectedUsers);
   selectedUsers.forEach((user) => {
     const name = user.firstName + " " + user.lastName;
     selectedUsersHtml =
       selectedUsersHtml + `<span class='selectedUser'>${name}</span>`;
   });
-  console.log(selectedUsersHtml);
   document.querySelectorAll(".selectedUser").forEach((el) => el.remove());
   document
     .getElementById("selectedUsers")
@@ -660,7 +647,6 @@ document.addEventListener("click", async function (e) {
     if (!chat || !chat._id) {
       return alert("Invalid respone from server");
     }
-    console.log(chat);
     location.replace(`/messages/${chat._id}`);
   }
 });
@@ -682,7 +668,6 @@ function getChatName(chatData) {
 
 function getOtherChatUsers(users) {
   if (users.length === 1) {
-    console.log(users.length);
     return users;
   }
   return users.filter((user) => user._id !== userLoggedIn._id);
@@ -783,7 +768,6 @@ function createUserHtml(userData, showFollowButton) {
   let htmlFollowButton = "";
   const isFollowing =
     userLoggedIn.following && userLoggedIn.following.includes(userData._id);
-  console.log(isFollowing);
   const btnText = isFollowing ? "Following" : "Follow";
   const buttonClass = isFollowing ? "followBtn following" : "followBtn";
 
@@ -793,18 +777,6 @@ function createUserHtml(userData, showFollowButton) {
                           </div>`;
   }
 
-  // return `<div class='user'>
-  //                 <div class='userImageContainer'>
-  //                     <img src='${userData.profilePic}'>
-  //                 </div>
-  //                 <div class='userDetailsContainer'>
-  //                     <div class='header'>
-  //                         <a href='/profile/${userData.userName}'>${name}</a>
-  //                         <span class='username'>@${userData.userName}</span>
-  //                     </div>
-  //                 </div>
-  //                 ${htmlFollowButton}
-  //             </div>`;
   return `<div class='userImageContainer'>
             <img src='${userData.profilePic}'>
           </div>
@@ -912,11 +884,10 @@ function showNotificationPopup(data) {
 
 //showing message notification popup
 function showMessageNotificationPopup(data) {
-  console.log(data);
   if (!data.chat.latestMessage._id) {
     data.chat.latestMessage = data;
   }
-  const html = createChatHtml(data.chat);
+  const html = createChatHtml(data.chat, "messageNotification");
   const container = document.getElementById("notificationList");
   container.insertAdjacentHTML("afterbegin", html);
   setTimeout(() => {
@@ -924,9 +895,59 @@ function showMessageNotificationPopup(data) {
   }, 5000);
 }
 
+// function for message received
+function messageReceived(newMessage) {
+  if (document.querySelector(".chatContainer") === null) {
+    //showing popup notification
+    showMessageNotificationPopup(newMessage);
+
+    return;
+  } else {
+    addChatMessageHtml(newMessage);
+    scrollToBottom();
+  }
+  refreshMessagesBadge();
+}
+
+//function for refreshing the message Badge
+const refreshMessagesBadge = () => {
+  axios
+    .get("/api/chats", { params: { unreadOnly: "true" } })
+    .then((results) => {
+      const messageNotificationsNo = results.data.chats.length;
+      if (messageNotificationsNo === null || messageNotificationsNo === 0) {
+        document.getElementById("messagesBadge").classList.remove("active");
+      } else {
+        document.getElementById("messagesBadge").textContent =
+          messageNotificationsNo;
+        document.getElementById("messagesBadge").classList.add("active");
+      }
+    });
+};
+
+function createChatHtml(chatData, messageNotification = "") {
+  const chatName = getChatName(chatData);
+  const latestMessage = getLatestMessage(chatData.latestMessage);
+  const image = getChatImageElements(chatData);
+
+  //background color for unread chats should be blue
+  const activeClass =
+    !chatData.latestMessage ||
+    chatData.latestMessage.readBy.includes(userLoggedIn._id)
+      ? ""
+      : "active";
+
+  return `<a href='/messages/${chatData._id}' class="resultListItem ${messageNotification} ${activeClass}">
+            ${image}
+            <div class='resultsDetailsContainer ellipsis'>
+                <span class='heading ellipsis'>${chatName}</span>
+                <span class='subtext ellipsis'>${latestMessage}</span>
+            </div>
+    </a>`;
+}
+
 //getting the chat latest message
 function getLatestMessage(latestMessage) {
-  console.log(latestMessage);
   if (latestMessage) {
     return `${latestMessage.sender.firstName} ${latestMessage.sender.lastName}: ${latestMessage.content}`;
   }
@@ -950,7 +971,6 @@ function getChatName(chatData) {
 
 function getOtherChatUsers(users) {
   if (users.length === 1) {
-    console.log(users.length);
     return users;
   }
   return users.filter((user) => user._id !== userLoggedIn._id);
@@ -975,15 +995,10 @@ function getUserChatImageElement(user) {
   return `<img src=${user.profilePic} alt="User's profile picture">`;
 }
 
-// function for message received
-function messageReceived(newMessage) {
-  console.log(newMessage);
-  if (document.querySelector(".chatContainer") === null) {
-    //showing popup notification
-    showMessageNotificationPopup(newMessage);
+//scrolling to the bottom page
+function scrollToBottom() {
+  const container = document.querySelector(".chatMessages");
+  const scrollHeight = container.scrollHeight;
 
-    return;
-  }
-  addChatMessageHtml(newMessage);
-  scrollToBottom();
+  container.scrollTop = scrollHeight;
 }

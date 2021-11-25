@@ -53,7 +53,6 @@ exports.getAllMessages = async (req, res, next) => {
 
 //marking all messages as read
 exports.markAllMessagesAsRead = async (req, res, next) => {
-  console.log("mark all messages as read info", req.params.chatId);
   await Message.updateMany(
     { chat: req.params.chatId },
     { $addToSet: { readBy: req.session.user._id } }

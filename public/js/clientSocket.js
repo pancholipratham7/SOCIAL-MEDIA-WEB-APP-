@@ -17,16 +17,13 @@ socket.on("message received", (newMessage) => {
 socket.on("notification received", async (newNotification) => {
   const res = await axios.get("/api/notifications/latest");
   refreshNotificationsBadge();
-  console.log(res.data.notification);
   showNotificationPopup(res.data.notification);
 });
 
 //function for emitting notification
 function emitNotification(userId) {
   //the user id will be basically the user to whom you want to send the notification
-  console.log(userId);
   if (userId === userLoggedIn._id) {
-    console.log("fibiugbie");
     return;
   }
   socket.emit("notification received", userId);

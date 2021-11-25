@@ -118,7 +118,6 @@ exports.getSearchPage = async (req, res, next) => {
 //selected tab on search page route
 exports.searchInfoAboutSelectedTab = async (req, res, next) => {
   const selectedTab = req.params.selectedTab;
-  console.log(selectedTab);
   res.render("searchPage", {
     pageTitle: "Search",
     userLoggedIn: req.session.user,

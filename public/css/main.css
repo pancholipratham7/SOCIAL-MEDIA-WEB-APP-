@@ -823,3 +823,7 @@ nav a:hover {
 #notificationList .notificationActive {
   background-color: white;
 }
+
+.active {
+  background-color: var(--blueBackground);
+}

@@ -41,7 +41,6 @@ exports.getChats = async (req, res, next) => {
     .sort({ updatedAt: 1 });
 
   if (req.query.unreadOnly !== undefined && req.query.unreadOnly === "true") {
-    console.log("Yes we want unread messages Only");
     chats = chats.filter(
       (chat) =>
         chat.latestMessage &&
@@ -58,13 +57,11 @@ exports.getChats = async (req, res, next) => {
 
 // Update chat Name
 exports.updateChatName = async (req, res, next) => {
-  console.log(req.body.chatName);
   const updatedChat = await Chat.findByIdAndUpdate(
     req.params.chatId,
     { chatName: req.body.chatName },
     { new: true }
   );
-  console.log(updatedChat);
   res.status(200).json({
     status: "success",
     updatedChat: updatedChat,
@@ -73,7 +70,6 @@ exports.updateChatName = async (req, res, next) => {
 
 //getting a particular chat by chatId
 exports.getAChat = async (req, res, next) => {
-  console.log("Rizwan");
   //getting one chat
   try {
     const chat = await Chat.findOne({

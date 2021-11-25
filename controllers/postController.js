@@ -78,7 +78,6 @@ exports.getAllPosts = async (req, res, next) => {
       const isReply = searchObj.isReply == "true";
       searchObj.replyTo = { $exists: isReply };
       delete searchObj.isReply;
-      console.log(searchObj.replyTo);
     }
 
     //for searching posts with input search posts
@@ -239,9 +238,6 @@ exports.deletePost = async (req, res, next) => {
 
 //function for pinning and unpinning post
 exports.pinPost = async (req, res, next) => {
-  // console.log(req.params.postId);
-  // console.log(req.body.pinned);
-
   //firstly unpinning all the post
   if (req.body.pinned !== undefined) {
     await Post.updateMany({ postedBy: req.session.user }, { pinned: false });

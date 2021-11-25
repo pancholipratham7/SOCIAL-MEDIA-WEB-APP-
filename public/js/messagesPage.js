@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", async function (e) {
   // handling the typing event at the client side
   socket.on("typing", (data) => {
     document.querySelector(".typingDots").style.display = "block";
-    console.log(`${data.user} is typing`);
   });
 
   // handling the stopping typing indicator event
@@ -25,9 +24,6 @@ document.addEventListener("DOMContentLoaded", async function (e) {
 
   //Adding the chat Name
   const chatInfo = await axios.get(`/api/chats/${chatId}`);
-  console.log(chatInfo);
-  console.log(chatInfo.data.chat);
-  console.log(getChatName(chatInfo.data.chat));
   document.getElementById("chatName").textContent = getChatName(
     chatInfo.data.chat
   );
@@ -40,7 +36,6 @@ document.addEventListener("DOMContentLoaded", async function (e) {
   outputAllPreviousMessages(allPreviousMessages.data.messages);
 
   async function outputAllPreviousMessages(prevMessages) {
-    console.log(prevMessages);
     if (prevMessages.length === 0) {
       return;
     }
@@ -136,7 +131,6 @@ document.addEventListener("DOMContentLoaded", async function (e) {
       const currentTypingTime = new Date().getTime();
       const typingTimeDiff = currentTypingTime - lastTypingTime;
       if (typingTimeDiff >= timerLength && typing) {
-        console.log("Stopping the typing Indicator");
         socket.emit("stop typing", chatId);
         typing = false;
       }
@@ -157,14 +151,11 @@ function createChatImages(chatData, userLoggedIn) {
   }
   for (let j = 0; j < chatData.users.length; j++) {
     const user = chatData.users[j];
-    console.log(user._id, typeof user._id);
-    console.log(userLoggedIn._id, typeof userLoggedIn._id);
     if (i === maxImagesToShow) {
       break;
     }
 
     if (user._id === userLoggedIn._id) {
-      console.log("HI");
       continue;
     }
 
@@ -191,10 +182,6 @@ function addChatMessageHtml(message, nextMessage, lastSenderId) {
 
 //creating the messageHtml
 function createMessageHtml(message, nextMessage, lastSenderId) {
-  console.log(message);
-  console.log(nextMessage);
-  console.log(lastSenderId);
-
   const sender = message.sender;
   const senderName = `${sender.firstName} ${sender.lastName}`;
   const currentSenderId = sender._id;
@@ -247,57 +234,8 @@ function addMessagesHtmlToPage(messageDiv) {
   // scroll to bottom
 }
 
-//scrolling to the bottom page
-function scrollToBottom() {
-  const container = document.querySelector(".chatMessages");
-  const scrollHeight = container.scrollHeight;
-
-  container.scrollTop = scrollHeight;
-}
-
-//function for refreshing the message Badge
-const refreshMessagesBadge = () => {
-  axios
-    .get("/api/chats", { params: { unreadOnly: "true" } })
-    .then((results) => {
-      console.log("Message notifications");
-      console.log(results.data);
-      const messageNotificationsNo = results.data.chats.length;
-      if (messageNotificationsNo === null || messageNotificationsNo === 0) {
-        document.getElementById("messagesBadge").classList.remove("active");
-      } else {
-        document.getElementById("messagesBadge").textContent =
-          messageNotificationsNo;
-        document.getElementById("messagesBadge").classList.add("active");
-      }
-    });
-};
-
 //FUNCTION FOR MARKING ALL MESSAGES AS READ
 async function markAllMessagesAsRead() {
   const res = await axios.put(`/api/messages/${chatId}/markAllMessagesAsRead`);
   refreshMessagesBadge();
-}
-
-//getting the chatName
-//If we have not given our choice on selecting name for the group chat then by default the group chat will be set to all the user's Name
-function getChatName(chatData) {
-  let chatName = chatData.chatName;
-  if (!chatName) {
-    const otherChatUsers = getOtherChatUsers(chatData.users);
-    let namesArray = otherChatUsers.map(
-      (user) => user.firstName + " " + user.lastName
-    );
-    chatName = namesArray.join(", ");
-  }
-
-  return chatName;
-}
-
-function getOtherChatUsers(users) {
-  if (users.length === 1) {
-    console.log(users.length);
-    return users;
-  }
-  return users.filter((user) => user._id !== userLoggedIn._id);
 }

@@ -12,7 +12,6 @@ exports.isLoggedIn = (req, res, next) => {
 };
 
 exports.searchInputUsers = async (req, res, next) => {
-  console.log(req.query);
   let searchObj = req.query;
   if (req.query.search !== undefined) {
     searchObj = {
@@ -104,7 +103,6 @@ exports.uploadProfilePicture = async (req, res, next) => {
       data: null,
     });
   }
-  console.log(req.file);
 
   const filePath = `/uploads/images/${req.file.filename}.png`;
   const tempPath = req.file.path;
@@ -140,7 +138,6 @@ exports.uploadCoverPhoto = async (req, res, next) => {
       data: null,
     });
   }
-  console.log(req.file);
 
   const filePath = `/uploads/images/${req.file.filename}.png`;
   const tempPath = req.file.path;
