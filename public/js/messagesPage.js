@@ -171,69 +171,6 @@ function createChatImages(chatData, userLoggedIn) {
           </div>`;
 }
 
-// function for adding sent message  on the message page
-function addChatMessageHtml(message, nextMessage, lastSenderId) {
-  if (!message || !message._id) {
-    return alert("Message is not valid");
-  }
-  const messageDiv = createMessageHtml(message, nextMessage, lastSenderId);
-  addMessagesHtmlToPage(messageDiv);
-}
-
-//creating the messageHtml
-function createMessageHtml(message, nextMessage, lastSenderId) {
-  const sender = message.sender;
-  const senderName = `${sender.firstName} ${sender.lastName}`;
-  const currentSenderId = sender._id;
-  const nextSenderId = nextMessage != null ? nextMessage.sender._id : "";
-  const isFirst = lastSenderId != currentSenderId;
-  const isLast = nextSenderId != currentSenderId;
-
-  const isMine = message.sender._id === userLoggedIn._id;
-  let liClassName = isMine ? "mine" : "theirs";
-  let senderNameElement = "";
-
-  if (isFirst) {
-    liClassName += " first";
-    if (!isMine) {
-      senderNameElement = `<span class="senderName">${senderName}</span>`;
-    }
-  }
-
-  let profileImageMessageElement = "";
-
-  if (isLast) {
-    liClassName += " last";
-    profileImageMessageElement = `<img src="${sender.profilePic}">`;
-  }
-
-  let messageImageContainer = "";
-  if (!isMine) {
-    messageImageContainer = `<div class="imageContainer">
-                                  ${profileImageMessageElement}
-                               </div>`;
-  }
-
-  return `<li class='message ${liClassName}'>
-              ${messageImageContainer}
-              <div class='messageContainer'>
-                  ${senderNameElement}
-                  <span class='messageBody'>
-                    ${message.content}
-                  </span>
-              </div>
-             </li>`;
-}
-
-// adding messages Html to the page
-function addMessagesHtmlToPage(messageDiv) {
-  document
-    .querySelector(".chatMessages")
-    .insertAdjacentHTML("beforeend", messageDiv);
-
-  // scroll to bottom
-}
-
 //FUNCTION FOR MARKING ALL MESSAGES AS READ
 async function markAllMessagesAsRead() {
   const res = await axios.put(`/api/messages/${chatId}/markAllMessagesAsRead`);

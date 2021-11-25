@@ -13,6 +13,7 @@ exports.sendMessage = (req, res, next) => {
     content: req.body.content,
     sender: req.session.user._id,
     chat: req.body.chat,
+    readBy: [req.session.user._id],
   };
 
   Message.create(newMessage)
