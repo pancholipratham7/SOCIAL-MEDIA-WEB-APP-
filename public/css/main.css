@@ -827,3 +827,21 @@ nav a:hover {
 .active {
   background-color: var(--blueBackground);
 }
+
+#trendingSection {
+  height: 40%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#trendingSection span {
+  color: var(--blue);
+  font-size: 25px;
+  margin-right: 15px;
+}
+
+#trendingSection i {
+  font-size: 40px;
+}
